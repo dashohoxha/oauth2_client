@@ -1,0 +1,53 @@
+<?php
+/**
+ * @file
+ * Provides OAuth2 server functionality.
+ */
+
+/**
+ * Implements hook_init().
+ *
+ * Nags the user about the missing library on OAuth2 admin pages.
+ */
+function oauth2_server_init() {
+  $item = menu_get_item();
+  if ($item['access'] && strpos($item['path'], 'admin/structure/oauth2-clients') === 0) {
+    $path = oauth2_client_get_library_path();
+    // Check for the existence of one file from the library.
+    if (!$path || !file_exists($path . '/Client.php')) {
+      $message = t('The PHP-OAuth2 client library is required for the oauth2_client module to function.
+        Download the library from <a href="https://github.com/adoy/PHP-OAuth2" target="_blank">GitHub</a> and place it in <em>!path</em>.', array('!path' => $path));
+      drupal_set_message($message, 'error');
+    }
+  }
+}
+
+/**
+ * Implements hook_libraries_info().
+ */
+function oauth2_client_libraries_info() {
+  $libraries = array();
+  $libraries['PHP-OAuth2'] = array(
+    'name' => 'OAuth2 Client',
+    'vendor url' => 'https://github.com/adoy/PHP-OAuth2',
+  );
+  return $libraries;
+}
+
+/**
+ * Implements hook_menu().
+ */
+function oauth2_client_menu() {
+  $items = array();
+  $items['oauth2/authorized'] = array(
+    'page callback' => 'oauth2_client_authorized',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+    //'file' => 'oauth2_server.pages.inc',
+  );
+
+  return $items;
+}
+
+function oauth2_client_authorized() {
+}

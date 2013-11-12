@@ -1,0 +1,15 @@
+<?php
+/**
+ * @file oauth2_client.install
+ * Install and update functions for the module oauth2_client.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function oauth2_client_schema() {
+  // create a cache table for this module
+  $schema['cache_oauth2_client'] = drupal_get_schema_unprocessed('system', 'cache');
+
+  return $schema;
+}
