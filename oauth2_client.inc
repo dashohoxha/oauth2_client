@@ -3,13 +3,13 @@
  * This is a wrapper for the PHP-OAuth2 client library.
  */
 
-require dirname(__FILE__) . '/PHP-OAuth2/Client.php';
-require dirname(__FILE__) . '/PHP-OAuth2/GrantType/IGrantType.php';
-
-require dirname(__FILE__) . '/PHP-OAuth2/GrantType/AuthorizationCode.php';
-require dirname(__FILE__) . '/PHP-OAuth2/GrantType/RefreshToken.php';
-require dirname(__FILE__) . '/PHP-OAuth2/GrantType/ClientCredentials.php';
-require dirname(__FILE__) . '/PHP-OAuth2/GrantType/Password.php';
+$php_oauth2_path = libraries_get_path('PHP-OAuth2');
+require $php_oauth2_path . '/Client.php';
+require $php_oauth2_path . '/GrantType/IGrantType.php';
+require $php_oauth2_path . '/GrantType/AuthorizationCode.php';
+require $php_oauth2_path . '/GrantType/RefreshToken.php';
+require $php_oauth2_path . '/GrantType/ClientCredentials.php';
+require $php_oauth2_path . '/GrantType/Password.php';
 
 class OAuth2Client {
   /**
@@ -17,6 +17,11 @@ class OAuth2Client {
    * Can be: server-side | client-credentials | user-password
    */
   private $authorization_flow = 'server-side';
+
+  /**
+   * Id of the client.
+   */
+  private $client_id = NULL;
 
   /**
    * The delegate OAuth2\Client object, from PHP-OAuth2 library
@@ -70,12 +75,15 @@ class OAuth2Client {
   );
 
   /**
+   * $authorization_flow can be:
+   *     server-side | client-credentials | user-password
    * The $params argument contains any additional that are needed
    * by the different types of authorization flows.
    */
   public function __construct($authorization_flow, $client_id, $client_secret,
 			      $token_endpoint, $params = array()) {
-    $this->authorization_flow = $flow;
+    $this->authorization_flow = $authorization_flow;
+    $this->client_id = $client_id;
     $this->client = new OAuth2\Client($client_id, $client_secret);
     $this->token_endpoint = $token_endpoint;
 
@@ -97,9 +105,14 @@ class OAuth2Client {
     }
 
     // get the token data from the session, if it is stored there
-    if (isset($_SESSION['oauth2_token'])) {
-      $this->token = $_SESSION['oauth2_token'];
+    if (isset($_SESSION['oauth2_token'][$this->client_id])) {
+      $this->token = $_SESSION['oauth2_token'][$this->client_id];
     }
+  }
+
+  public function fetch($url, $params = array()) {
+    $this->getAccessToken();
+    return $this->client->fetch($url, $params);
   }
 
   /**
@@ -132,7 +145,7 @@ class OAuth2Client {
 
     // store the token (on session as well)
     $this->token = $token;
-    $_SESSION['oauth2_token'] = $token;
+    $_SESSION['oauth2_token'][$this->client_id] = $token;
     $this->client->setAccessToken($token['access_token']);
 
     return $token['access_token'];
@@ -157,7 +170,7 @@ class OAuth2Client {
 
   private function get_token_user_password() {
     // try to get a token using the refresh token
-    $token = get_token_refresh_token();
+    $token = $this->get_token_refresh_token();
     if ($token) {
       return $token;
     }
@@ -194,7 +207,7 @@ class OAuth2Client {
     );
 
     if ($response['code'] != 200) {
-      // refresh token expired or invalid
+      // refresh_token expired or invalid
       return NULL;
     }
 
@@ -203,24 +216,14 @@ class OAuth2Client {
 
   private function get_token_server_side() {
     // try to get a token using the refresh token
-    $token = get_token_refresh_token();
+    $token = $this->get_token_refresh_token();
     if ($token) {
       return $token;
     }
 
-    return $this->get_token_authorization_code();
-  }
-
-  function get_token_authorization_code() {
     if (!isset($_GET['code'])) {
-      $state = md5(base64_encode(pack('N6', mt_rand(), mt_rand(), mt_rand(), mt_rand(), mt_rand(), uniqid())));
-      $_SESSION['oauth2_state'] = $state;
-      //$path = request_path();
-      $destination = drupal_get_destination();
-      $destination = $destination['destination'];
       $extra_params = array(
-        'state' => drupal_get_token($this->client->getClientId()),
-        'destination' => $destination,
+        'state' => drupal_get_token($this->client_id),
       );
       if ($this->scope) {
         $extra_params['scope'] = $this->scope;
@@ -234,7 +237,7 @@ class OAuth2Client {
     }
     else {
       // check the 'state' parameter, to mittigate CSRF attacks
-      if (! drupal_valid_token($_GET['state'], $this->client->getClientId())) {
+      if (! drupal_valid_token($_GET['state'], $this->client_id)) {
         drupal_set_message(t('The state does not validate, the received token is not trustable.'), 'error');
         return NULL;
       }
@@ -246,6 +249,10 @@ class OAuth2Client {
           'code' => $_GET['code'],
           'redirect_uri' => $this->redirect_uri,
         ));
+
+      if ($response['code'] != 200) {
+        return NULL;
+      }
 
       return $response['result'];
     }

@@ -9,7 +9,7 @@
  *
  * Nags the user about the missing library on OAuth2 admin pages.
  */
-function oauth2_server_init() {
+function oauth2_client_init() {
   $item = menu_get_item();
   if ($item['access'] && strpos($item['path'], 'admin/structure/oauth2-clients') === 0) {
     $path = oauth2_client_get_library_path();
@@ -35,6 +35,21 @@ function oauth2_client_libraries_info() {
 }
 
 /**
+ * Returns the filesystem path to the PHP-OAuth2 library.
+ */
+function oauth2_client_get_library_path() {
+  $path = 'sites/all/libraries/PHP-OAuth2';
+  // If installed, use the Libraries API to locate the library.
+  if (module_exists('libraries')) {
+    module_load_include('module', 'libraries');
+    $path = libraries_get_path('PHP-OAuth2');
+  }
+
+  return $path;
+}
+
+
+/**
  * Implements hook_menu().
  */
 function oauth2_client_menu() {
@@ -45,9 +60,90 @@ function oauth2_client_menu() {
     'type' => MENU_CALLBACK,
     //'file' => 'oauth2_server.pages.inc',
   );
+  $items['oauth2/test1'] = array(
+    'page callback' => 'oauth2_client_test1',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+    //'file' => 'oauth2_server.pages.inc',
+  );
+  $items['oauth2/test2'] = array(
+    'page callback' => 'oauth2_client_test2',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+    //'file' => 'oauth2_server.pages.inc',
+  );
+  $items['oauth2/test3'] = array(
+    'page callback' => 'oauth2_client_test3',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+    //'file' => 'oauth2_server.pages.inc',
+  );
 
   return $items;
 }
 
 function oauth2_client_authorized() {
+  oauth2_client_test3();
+}
+
+/** Testing owner password flow. */
+function oauth2_client_test1() {
+  global $oauth2_client;
+  $oauth2_client = new OAuth2Client(
+    $authentication_flow = 'user-password',
+    $client_id = 'test1',
+    $client_secret = 'test1',
+    $token_endpoint = 'https://dev.l10n.org.xx/oauth2/token',
+    $params = array(
+      'username' => 'user1',
+      'password' => 'user1',
+    )
+  );
+  $access_token = $oauth2_client->getAccessToken();
+
+  $base_url = "https://dev.l10n.org.xx";
+  $url = "$base_url/btr/translations/next?lng=sq&access_token=$access_token";
+  $response = drupal_http_request($url);
+  $response->data = json_decode($response->data);
+  print '<xmp>';  print_r($response);  print '</xmp>';  //debug
+}
+
+/** Testing client credentials flow. */
+function oauth2_client_test2() {
+  global $oauth2_client;
+  $oauth2_client = new OAuth2Client(
+    $authentication_flow = 'client-credentials',
+    $client_id = 'test2',
+    $client_secret = 'test2',
+    $token_endpoint = 'https://dev.l10n.org.xx/oauth2/token'
+  );
+  $access_token = $oauth2_client->getAccessToken();
+
+  $base_url = "https://dev.l10n.org.xx";
+  $url = "$base_url/btr/translations/next?lng=sq&access_token=$access_token";
+  $response = drupal_http_request($url);
+  $response->data = json_decode($response->data);
+  print '<xmp>';  print_r($response);  print '</xmp>';  //debug
+}
+
+/** Testing owner password flow. */
+function oauth2_client_test3() {
+  global $oauth2_client;
+  $oauth2_client = new OAuth2Client(
+    $authentication_flow = 'server-side',
+    $client_id = 'test1',
+    $client_secret = 'test1',
+    $token_endpoint = 'https://dev.l10n.org.xx/oauth2/token',
+    $params = array(
+      'authorization_endpoint' => 'https://dev.l10n.org.xx/oauth2/authorize',
+      'redirect_uri' => 'https://dev.l10n.org.xx/oauth2/authorized',
+    )
+  );
+  $access_token = $oauth2_client->getAccessToken();
+
+  $base_url = "https://dev.l10n.org.xx";
+  $url = "$base_url/btr/translations/next?lng=sq&access_token=$access_token";
+  $response = drupal_http_request($url);
+  $response->data = json_decode($response->data);
+  print '<xmp>';  print_r($response);  print '</xmp>';  //debug
 }
