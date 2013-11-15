@@ -83,7 +83,10 @@ function oauth2_client_menu() {
 }
 
 function oauth2_client_authorized() {
-  oauth2_client_test3();
+  if (isset($_SESSION['oauth2_client_destination'])) {
+    $destination = $_SESSION['oauth2_client_destination'];
+    drupal_goto($destination, array('query' => $_REQUEST));
+  }
 }
 
 /** Testing owner password flow. */

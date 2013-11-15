@@ -148,6 +148,16 @@ class OAuth2Client {
     $_SESSION['oauth2_token'][$this->client_id] = $token;
     $this->client->setAccessToken($token['access_token']);
 
+    // redirect to the original path (if this is a redirection
+    // from the server-side flow)
+    if (isset($_SESSION['oauth2_client_destination'])) {
+      $destination = $_SESSION['oauth2_client_destination'];
+      unset($_REQUEST['code']);
+      unset($_REQUEST['state']);
+      drupal_goto($destination, array('query' => $_REQUEST));
+    }
+
+    // return the token
     return $token['access_token'];
   }
 
@@ -233,6 +243,11 @@ class OAuth2Client {
         $this->redirect_uri,
         $extra_params);
       header('Location: ' . $auth_url);
+
+      $destination = drupal_get_destination();
+      $destination = $destination['destination'];
+      $_SESSION['oauth2_client_destination'] = $destination;
+
       die('Redirect');
     }
     else {
