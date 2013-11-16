@@ -1,0 +1,51 @@
+
+Drupal module for OAuth2 clients. It is based (depends) on the library
+https://github.com/adoy/PHP-OAuth2, and is supposed to work well with
+https://drupal.org/project/oauth2_server.
+
+Define oauth2 clients in your code like this:
+#+BEGIN_EXAMPLE
+/**
+ * Implements hook_oauth2_clients().
+ */
+function MYMODULE_oauth2_clients() {
+  $server_url = 'https://oauth2_server.example.org';
+  $client_url = 'https://oauth2_client.example.org';
+
+  // user-password flow
+  $oauth2_clients['test1'] = array(
+    'token_endpoint' => $server_url . '/oauth2/token',
+    'authentication_flow' => 'user-password',
+    'client_id' => 'test1',
+    'client_secret' => 'test1',
+    'username' => 'user1',
+    'password' => 'user1',
+  );
+
+  // client-credentials flow
+  $oauth2_clients['test2'] = array(
+    'token_endpoint' => $server_url . '/oauth2/token',
+    'authentication_flow' => 'client-credentials',
+    'client_id' => 'test2',
+    'client_secret' => 'test2',
+  );
+
+  //server-side flow
+  $oauth2_clients['test3'] = array(
+    'token_endpoint' => $server_url . '/oauth2/token',
+    'authentication_flow' => 'server-side',
+    'client_id' => 'test1',
+    'client_secret' => 'test1',
+    'authorization_endpoint' => $server_url . '/oauth2/authorize',
+    'redirect_uri' => $client_url . '/oauth2/authorized',
+  );
+
+  return $oauth2_clients;
+}
+#+END_EXAMPLE
+
+Then call them like this:
+#+BEGIN_EXAMPLE
+  $oauth2_client = oauth2_client_load('test1');
+  $access_token = $oauth2_client->getAccessToken();
+#+END_EXAMPLE
