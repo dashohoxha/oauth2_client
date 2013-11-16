@@ -48,6 +48,118 @@ function oauth2_client_get_library_path() {
   return $path;
 }
 
+/**
+ * Gets all defined oauth2_clients.
+ */
+function oauth2_client_get_all() {
+  $data = array();
+  foreach (module_implements('oauth2_clients') as $module) {
+    $result = call_user_func($module . '_oauth2_clients');
+    if (isset($result) && is_array($result)) {
+      foreach ($result as $name => $item) {
+        $item += array('module' => $module);
+        $data[$name] = $item;
+      }
+    }
+  }
+  drupal_alter('oauth2_clients', $data);
+  return $data;
+}
+
+/**
+ * Implements hook_oauth2_clients().
+ * Defines test clients.
+ */
+function oauth2_client_oauth2_clients() {
+  // for testing user-password flow
+  $oauth2_clients['test1'] = array(
+    'token_endpoint' => 'https://dev.l10n.org.xx/oauth2/token',
+    'authentication_flow' => 'user-password',
+    'client_id' => 'test2',
+    'client_secret' => 'test2',
+    'username' => 'user1',
+    'password' => 'user1',
+  );
+
+  // for testing client-credentials flow
+  $oauth2_clients['test2'] = array(
+    'token_endpoint' => 'https://dev.l10n.org.xx/oauth2/token',
+    'authentication_flow' => 'client-credentials',
+    'client_id' => 'test2',
+    'client_secret' => 'test2',
+  );
+
+  // for testing server-side flow
+  $oauth2_clients['test3'] = array(
+    'token_endpoint' => 'https://dev.l10n.org.xx/oauth2/token',
+    'authentication_flow' => 'server-side',
+    'client_id' => 'test1',
+    'client_secret' => 'test1',
+    'authorization_endpoint' => 'https://dev.l10n.org.xx/oauth2/authorize',
+    'redirect_uri' => 'https://dev.l10n.org.xx/oauth2/authorized',
+  );
+
+  return $oauth2_clients;
+}
+
+/**
+ * Load an oauth2 client.
+ *
+ * @return OAuth2Client
+ *   Returns an OAuth2Client or NULL if not found.
+ */
+function oauth2_client_load($name) {
+  $oauth2_clients = oauth2_client_get_all();
+
+  if (!isset($oauth2_clients[$name])) {
+    return NULL;
+  }
+  $client = $oauth2_clients[$name];
+
+  switch ($client['authentication_flow']) {
+    case 'client-credentials':
+      $oauth2_client = new OAuth2Client(
+        'client-credentials',
+        $client['client_id'],
+        $client['client_secret'],
+        $client['token_endpoint']
+      );
+      break;
+
+    case 'user-password':
+      $oauth2_client = new OAuth2Client(
+        'user-password',
+        $client['client_id'],
+        $client['client_secret'],
+        $client['token_endpoint'],
+        array(
+          'username' => $client['username'],
+          'password' => $client['password'],
+        )
+      );
+      break;
+
+    case 'server-side':
+      $oauth2_client = new OAuth2Client(
+        'server-side',
+        $client['client_id'],
+        $client['client_secret'],
+        $client['token_endpoint'],
+        array(
+          'authorization_endpoint' => $client['authorization_endpoint'],
+          'redirect_uri' => $client['redirect_uri'],
+        )
+      );
+      break;
+
+    default:
+      $oauth2_client = NULL;
+      break;
+  }
+
+  //print '<xmp>';  print_r($oauth2_client);  print '</xmp>';  exit(0);  //debug
+  return $oauth2_client;
+}
 
 /**
  * Implements hook_menu().
@@ -58,30 +170,20 @@ function oauth2_client_menu() {
     'page callback' => 'oauth2_client_authorized',
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
-    //'file' => 'oauth2_server.pages.inc',
   );
-  $items['oauth2/test1'] = array(
-    'page callback' => 'oauth2_client_test1',
+  $items['oauth2/test'] = array(
+    'page callback' => 'oauth2_client_test',
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
-    //'file' => 'oauth2_server.pages.inc',
   );
-  $items['oauth2/test2'] = array(
-    'page callback' => 'oauth2_client_test2',
-    'access callback' => TRUE,
-    'type' => MENU_CALLBACK,
-    //'file' => 'oauth2_server.pages.inc',
-  );
-  $items['oauth2/test3'] = array(
-    'page callback' => 'oauth2_client_test3',
-    'access callback' => TRUE,
-    'type' => MENU_CALLBACK,
-    //'file' => 'oauth2_server.pages.inc',
-  );
-
   return $items;
 }
 
+/**
+ * An authorized request in server-side flow
+ * will be redirected here (having variables
+ * 'code' and 'state').
+ */
 function oauth2_client_authorized() {
   if (isset($_SESSION['oauth2_client_destination'])) {
     $destination = $_SESSION['oauth2_client_destination'];
@@ -89,61 +191,22 @@ function oauth2_client_authorized() {
   }
 }
 
-/** Testing owner password flow. */
-function oauth2_client_test1() {
-  global $oauth2_client;
-  $oauth2_client = new OAuth2Client(
-    $authentication_flow = 'user-password',
-    $client_id = 'test1',
-    $client_secret = 'test1',
-    $token_endpoint = 'https://dev.l10n.org.xx/oauth2/token',
-    $params = array(
-      'username' => 'user1',
-      'password' => 'user1',
-    )
-  );
+/**
+ * Trying test clients.
+ */
+function oauth2_client_test($nr) {
+  $client_name = 'test' . $nr;
+  $oauth2_client = oauth2_client_load($client_name);
+  if (!$oauth2_client) {
+    drupal_set_message("Client '$client_name' could not be found!", 'error');
+    print "Client '$client_name' could not be found!";
+    return;
+  }
+
+  // get an access token
   $access_token = $oauth2_client->getAccessToken();
 
-  $base_url = "https://dev.l10n.org.xx";
-  $url = "$base_url/btr/translations/next?lng=sq&access_token=$access_token";
-  $response = drupal_http_request($url);
-  $response->data = json_decode($response->data);
-  print '<xmp>';  print_r($response);  print '</xmp>';  //debug
-}
-
-/** Testing client credentials flow. */
-function oauth2_client_test2() {
-  global $oauth2_client;
-  $oauth2_client = new OAuth2Client(
-    $authentication_flow = 'client-credentials',
-    $client_id = 'test2',
-    $client_secret = 'test2',
-    $token_endpoint = 'https://dev.l10n.org.xx/oauth2/token'
-  );
-  $access_token = $oauth2_client->getAccessToken();
-
-  $base_url = "https://dev.l10n.org.xx";
-  $url = "$base_url/btr/translations/next?lng=sq&access_token=$access_token";
-  $response = drupal_http_request($url);
-  $response->data = json_decode($response->data);
-  print '<xmp>';  print_r($response);  print '</xmp>';  //debug
-}
-
-/** Testing owner password flow. */
-function oauth2_client_test3() {
-  global $oauth2_client;
-  $oauth2_client = new OAuth2Client(
-    $authentication_flow = 'server-side',
-    $client_id = 'test1',
-    $client_secret = 'test1',
-    $token_endpoint = 'https://dev.l10n.org.xx/oauth2/token',
-    $params = array(
-      'authorization_endpoint' => 'https://dev.l10n.org.xx/oauth2/authorize',
-      'redirect_uri' => 'https://dev.l10n.org.xx/oauth2/authorized',
-    )
-  );
-  $access_token = $oauth2_client->getAccessToken();
-
+  // get a resource and output it
   $base_url = "https://dev.l10n.org.xx";
   $url = "$base_url/btr/translations/next?lng=sq&access_token=$access_token";
   $response = drupal_http_request($url);

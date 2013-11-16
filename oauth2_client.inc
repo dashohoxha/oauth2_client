@@ -152,6 +152,7 @@ class OAuth2Client {
     // from the server-side flow)
     if (isset($_SESSION['oauth2_client_destination'])) {
       $destination = $_SESSION['oauth2_client_destination'];
+      unset($_SESSION['oauth2_client_destination']);
       unset($_REQUEST['code']);
       unset($_REQUEST['state']);
       drupal_goto($destination, array('query' => $_REQUEST));
