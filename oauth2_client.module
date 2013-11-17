@@ -204,7 +204,12 @@ function oauth2_client_test($nr) {
   }
 
   // get an access token
-  $access_token = $oauth2_client->getAccessToken();
+  try {
+    $access_token = $oauth2_client->getAccessToken();
+  }
+  catch (Exception $e) {
+    drupal_set_message($e->getMessage(), 'error');
+  }
 
   // get a resource and output it
   $base_url = "https://dev.l10n.org.xx";
