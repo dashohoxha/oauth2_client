@@ -3,6 +3,10 @@ This module is a wrapper for the [[https://github.com/adoy/PHP-OAuth2][PHP-OAuth
 makes it suitable to be used in Drupal. It is designed as a complement
 to the module [[https://drupal.org/project/oauth2_server][oauth2_server]].
 
+*Note:* The modules oauth2_server and oauth2_client have conflicts
+with the module [[https://drupal.org/project/oauth2][oauth2]], so they should not be installed at the same
+time.
+
 * How to use it
 
   Define oauth2 clients in your code like this:
