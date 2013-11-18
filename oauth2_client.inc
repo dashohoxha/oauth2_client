@@ -29,7 +29,7 @@ class OAuth2Client {
    * Type of the authorization flow (https://drupal.org/node/1958718)
    * Can be: server-side | client-credentials | user-password
    */
-  private $authorization_flow = 'server-side';
+  private $auth_flow = 'server-side';
 
   /**
    * Id of the client.
@@ -90,7 +90,7 @@ class OAuth2Client {
   /**
    * Construct an OAuth2Client object.
    *
-   * @param $authorization_flow
+   * @param $auth_flow
    *    Can be: server-side | client-credentials | user-password
    *
    * @param $client_id
@@ -114,14 +114,10 @@ class OAuth2Client {
    *    - scope :: requested scopes, separated by a space
    *    - username :: username of the resource owner
    *    - password :: password of the resource owner
-   *
-   * See function oauth2_client_load() on file oauth2_client.module
-   * for examples of how to create oauth2_client objects
-   * for different types authorization flows.
    */
-  public function __construct($authorization_flow, $client_id, $client_secret,
+  public function __construct($auth_flow, $client_id, $client_secret,
 			      $token_endpoint, $params = array()) {
-    $this->authorization_flow = $authorization_flow;
+    $this->auth_flow = $auth_flow;
     $this->client_id = $client_id;
     $this->client = new OAuth2\Client($client_id, $client_secret);
     $this->token_endpoint = $token_endpoint;
@@ -149,6 +145,69 @@ class OAuth2Client {
     }
   }
 
+  /**
+   * Factory method to create a new OAuth2Client object.
+   * All the neccessary parameters are given as an associative array.
+   *
+   * @return OAuth2Client
+   *
+   * @example
+   *    $oauth2_client = OAuth2Client::create(array(
+   *      'auth_flow' => 'user-password',
+   *      'client_id' => 'client1',
+   *      'client_secret' => 'secret1',
+   *      'token_endpoint' => 'https://oath2_server.example.org/oath2/token',
+   *      'username' => 'user1',
+   *      'password' => 'passw1',
+   *    ));
+   */
+  public static function create($params) {
+    switch ($params['auth_flow']) {
+      case 'client-credentials':
+        $oauth2_client = new OAuth2Client(
+          'client-credentials',
+          $params['client_id'],
+          $params['client_secret'],
+          $params['token_endpoint']
+        );
+        break;
+
+      case 'user-password':
+        $oauth2_client = new OAuth2Client(
+          'user-password',
+          $params['client_id'],
+          $params['client_secret'],
+          $params['token_endpoint'],
+          array(
+            'username' => $params['username'],
+            'password' => $params['password'],
+          )
+        );
+        break;
+
+      case 'server-side':
+        $oauth2_client = new OAuth2Client(
+          'server-side',
+          $params['client_id'],
+          $params['client_secret'],
+          $params['token_endpoint'],
+          array(
+            'authorization_endpoint' => $params['authorization_endpoint'],
+            'redirect_uri' => $params['redirect_uri'],
+          )
+        );
+        break;
+
+      default:
+        $flow = $params['auth_flow'];
+        throw new Exception("Unknown flow type: '$flow'");
+        return NULL;
+        break;
+    }
+
+    return $oauth2_client;
+  }
+
   /*
   public function fetch($url, $params = array()) {
     $this->getAccessToken();
@@ -171,7 +230,7 @@ class OAuth2Client {
     }
 
     // get token data
-    switch ($this->authorization_flow) {
+    switch ($this->auth_flow) {
       case 'server-side':
         $token = $this->get_token_server_side();
         break;

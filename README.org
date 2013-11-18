@@ -17,7 +17,7 @@ to the module [[https://drupal.org/project/oauth2_server][oauth2_server]].
     // user-password flow
     $oauth2_clients['test1'] = array(
       'token_endpoint' => $server_url . '/oauth2/token',
-      'authentication_flow' => 'user-password',
+      'auth_flow' => 'user-password',
       'client_id' => 'test1',
       'client_secret' => 'test1',
       'username' => 'user1',
@@ -27,7 +27,7 @@ to the module [[https://drupal.org/project/oauth2_server][oauth2_server]].
     // client-credentials flow
     $oauth2_clients['test2'] = array(
       'token_endpoint' => $server_url . '/oauth2/token',
-      'authentication_flow' => 'client-credentials',
+      'auth_flow' => 'client-credentials',
       'client_id' => 'test2',
       'client_secret' => 'test2',
     );
@@ -35,7 +35,7 @@ to the module [[https://drupal.org/project/oauth2_server][oauth2_server]].
     // server-side flow
     $oauth2_clients['test3'] = array(
       'token_endpoint' => $server_url . '/oauth2/token',
-      'authentication_flow' => 'server-side',
+      'auth_flow' => 'server-side',
       'client_id' => 'test1',
       'client_secret' => 'test1',
       'authorization_endpoint' => $server_url . '/oauth2/authorize',
