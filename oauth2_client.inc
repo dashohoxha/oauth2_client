@@ -173,7 +173,7 @@ class OAuth2Client {
         $params['token_endpoint']
       );
     }
-    else if ($auth_flow == 'user-password') {
+    elseif ($auth_flow == 'user-password') {
       return new OAuth2Client(
         'user-password',
         $params['client_id'],
@@ -185,7 +185,7 @@ class OAuth2Client {
         )
       );
     }
-    else if ($auth_flow == 'server-side') {
+    elseif ($auth_flow == 'server-side') {
       return new OAuth2Client(
         'server-side',
         $params['client_id'],
