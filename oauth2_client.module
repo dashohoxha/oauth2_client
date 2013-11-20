@@ -67,11 +67,10 @@ function oauth2_client_get_all() {
 }
 
 /**
- * Implements hook_oauth2_clients().
- * Defines test clients.
+ * Implements hook_oauth2_clients(). Defines test clients.
  */
 function oauth2_client_oauth2_clients() {
-  // for testing user-password flow
+  // For testing user-password flow.
   $oauth2_clients['test1'] = array(
     'token_endpoint' => 'https://dev.l10n.org.xx/oauth2/token',
     'auth_flow' => 'user-password',
@@ -81,7 +80,7 @@ function oauth2_client_oauth2_clients() {
     'password' => 'user1',
   );
 
-  // for testing client-credentials flow
+  // For testing client-credentials flow.
   $oauth2_clients['test2'] = array(
     'token_endpoint' => 'https://dev.l10n.org.xx/oauth2/token',
     'auth_flow' => 'client-credentials',
@@ -89,7 +88,7 @@ function oauth2_client_oauth2_clients() {
     'client_secret' => 'test2',
   );
 
-  // for testing server-side flow
+  // For testing server-side flow.
   $oauth2_clients['test3'] = array(
     'token_endpoint' => 'https://dev.l10n.org.xx/oauth2/token',
     'auth_flow' => 'server-side',
@@ -105,9 +104,11 @@ function oauth2_client_oauth2_clients() {
 /**
  * Load an oauth2 client.
  *
- * @param $name
- *     Name of the client.
+ * @param string $name
+ *   Name of the client.
+ *
  * @return OAuth2Client
+ *   Returns an OAuth2Client object
  */
 function oauth2_client_load($name) {
   $oauth2_clients = oauth2_client_get_all();
@@ -116,7 +117,7 @@ function oauth2_client_load($name) {
     throw new Exception("No client with name '$name' is defined.");
   }
   $oauth2_client = OAuth2Client::create($oauth2_clients[$name]);
-  //print '<xmp>';  print_r($oauth2_client);  print '</xmp>';  exit(0);  //debug
+  // D: print '<xmp>';  print_r($oauth2_client);  print '</xmp>';  exit(0);  //debug
   return $oauth2_client;
 }
 
@@ -139,6 +140,8 @@ function oauth2_client_menu() {
 }
 
 /**
+ * Callback for path oauth/authorized.
+ *
  * An authorized request in server-side flow
  * will be redirected here (having variables
  * 'code' and 'state').
@@ -155,22 +158,22 @@ function oauth2_client_authorized() {
  */
 function oauth2_client_test($nr) {
   try {
-    // get an access token
+    // Get an access token.
     $client_name = 'test' . $nr;
     $oauth2_client = oauth2_client_load($client_name);
     $access_token = $oauth2_client->getAccessToken();
   }
   catch (Exception $e) {
     drupal_set_message($e->getMessage(), 'error');
-    print($e->getMessage());
+    print $e->getMessage();
     print '<xmp>';  print_r($e);  print '</xmp>';
     return;
   }
 
-  // get a resource and output it
+  // Get a resource and output it.
   $base_url = "https://dev.l10n.org.xx";
   $url = "$base_url/btr/translations/next?lng=sq&access_token=$access_token";
   $response = drupal_http_request($url);
   $response->data = json_decode($response->data);
-  print '<xmp>';  print_r($response);  print '</xmp>';  //debug
+  print '<xmp>';  print_r($response);  print '</xmp>';
 }
