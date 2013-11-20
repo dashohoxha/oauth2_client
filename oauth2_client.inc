@@ -166,7 +166,7 @@ class OAuth2Client {
   public static function create($params) {
     switch ($params['auth_flow']) {
       case 'client-credentials':
-        $oauth2_client = new OAuth2Client(
+        return new OAuth2Client(
           'client-credentials',
           $params['client_id'],
           $params['client_secret'],
@@ -175,7 +175,7 @@ class OAuth2Client {
         break;
 
       case 'user-password':
-        $oauth2_client = new OAuth2Client(
+        return new OAuth2Client(
           'user-password',
           $params['client_id'],
           $params['client_secret'],
@@ -188,7 +188,7 @@ class OAuth2Client {
         break;
 
       case 'server-side':
-        $oauth2_client = new OAuth2Client(
+        return new OAuth2Client(
           'server-side',
           $params['client_id'],
           $params['client_secret'],
@@ -199,14 +199,9 @@ class OAuth2Client {
           )
         );
         break;
-
-      default:
-        $flow = $params['auth_flow'];
-        throw new Exception("Unknown flow type: '$flow'");
-        break;
     }
-
-    return $oauth2_client;
+    $flow = $params['auth_flow'];
+    throw new Exception("Unknown flow type: '$flow'");
   }
 
   /**
