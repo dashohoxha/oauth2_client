@@ -164,44 +164,42 @@ class OAuth2Client {
    *    ));
    */
   public static function create($params) {
-    switch ($params['auth_flow']) {
-      case 'client-credentials':
-        return new OAuth2Client(
-          'client-credentials',
-          $params['client_id'],
-          $params['client_secret'],
-          $params['token_endpoint']
-        );
-        break;
-
-      case 'user-password':
-        return new OAuth2Client(
-          'user-password',
-          $params['client_id'],
-          $params['client_secret'],
-          $params['token_endpoint'],
-          array(
-            'username' => $params['username'],
-            'password' => $params['password'],
-          )
-        );
-        break;
-
-      case 'server-side':
-        return new OAuth2Client(
-          'server-side',
-          $params['client_id'],
-          $params['client_secret'],
-          $params['token_endpoint'],
-          array(
-            'authorization_endpoint' => $params['authorization_endpoint'],
-            'redirect_uri' => $params['redirect_uri'],
-          )
-        );
-        break;
+    $auth_flow = $params['auth_flow'];
+    if ($auth_flow == 'client-credentials') {
+      return new OAuth2Client(
+        'client-credentials',
+        $params['client_id'],
+        $params['client_secret'],
+        $params['token_endpoint']
+      );
     }
-    $flow = $params['auth_flow'];
-    throw new Exception("Unknown flow type: '$flow'");
+    else if ($auth_flow == 'user-password') {
+      return new OAuth2Client(
+        'user-password',
+        $params['client_id'],
+        $params['client_secret'],
+        $params['token_endpoint'],
+        array(
+          'username' => $params['username'],
+          'password' => $params['password'],
+        )
+      );
+    }
+    else if ($auth_flow == 'server-side') {
+      return new OAuth2Client(
+        'server-side',
+        $params['client_id'],
+        $params['client_secret'],
+        $params['token_endpoint'],
+        array(
+          'authorization_endpoint' => $params['authorization_endpoint'],
+          'redirect_uri' => $params['redirect_uri'],
+        )
+      );
+    }
+    else {
+      throw new Exception("Unknown authorization flow type: '$auth_flow'");
+    }
   }
 
   /**
