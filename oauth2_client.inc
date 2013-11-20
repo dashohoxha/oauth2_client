@@ -200,7 +200,7 @@ class OAuth2Client {
         );
         break;
 
-      case default:
+      default:
         $flow = $params['auth_flow'];
         throw new Exception("Unknown flow type: '$flow'");
         break;
@@ -234,7 +234,7 @@ class OAuth2Client {
         $token = $this->getTokenUserPassword();
         break;
 
-      case default:
+      default:
       case 'client-credentials':
         $token = $this->getTokenClientCredentials();
         break;
@@ -287,7 +287,7 @@ class OAuth2Client {
   }
 
   /**
-   * Get an access token from the authorization server
+   * Get an access token from the authorization server.
    *
    * with the user-password flow. Besides the client_id
    * and the client_secret this flow needs also the username

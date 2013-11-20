@@ -1,0 +1,97 @@
+
+This module is a wrapper for the PHP-OAuth2 client library, which
+makes it suitable to be used in Drupal. It is designed as a complement
+to the module oauth2_server.
+
+*Note:* The modules oauth2_server and oauth2_client have conflicts
+with the module oauth2, so they should not be installed at the same
+time.
+
+* How to use it
+
+  Define oauth2 clients in your code like this:
+  #+BEGIN_EXAMPLE
+  /**
+   * Implements hook_oauth2_clients().
+   */
+  function MYMODULE_oauth2_clients() {
+    $server_url = 'https://oauth2_server.example.org';
+    $client_url = 'https://oauth2_client.example.org';
+
+    // user-password flow
+    $oauth2_clients['test1'] = array(
+      'token_endpoint' => $server_url . '/oauth2/token',
+      'auth_flow' => 'user-password',
+      'client_id' => 'test1',
+      'client_secret' => 'test1',
+      'username' => 'user1',
+      'password' => 'user1',
+    );
+
+    // client-credentials flow
+    $oauth2_clients['test2'] = array(
+      'token_endpoint' => $server_url . '/oauth2/token',
+      'auth_flow' => 'client-credentials',
+      'client_id' => 'test2',
+      'client_secret' => 'test2',
+    );
+
+    // server-side flow
+    $oauth2_clients['test3'] = array(
+      'token_endpoint' => $server_url . '/oauth2/token',
+      'auth_flow' => 'server-side',
+      'client_id' => 'test1',
+      'client_secret' => 'test1',
+      'authorization_endpoint' => $server_url . '/oauth2/authorize',
+      'redirect_uri' => $client_url . '/oauth2/authorized',
+    );
+
+    return $oauth2_clients;
+  }
+  #+END_EXAMPLE
+
+  Then use them like this:
+  #+BEGIN_EXAMPLE
+    try {
+      $oauth2_client = oauth2_client_load('test1');
+      $access_token = $oauth2_client->getAccessToken();
+    }
+    catch (Exception $e) {
+      drupal_set_message($e->getMessage(), 'error');
+    }
+  #+END_EXAMPLE
+
+  The only thing that oauth2_client does is to get an access_token
+  from the oauth2_server, so that it can be used for accessing web
+  services.
+
+* How it works
+
+  An access token and its related data are stored on the session
+  ($_SESSION['oauth2_token'][$client_id]), so that it can be reused
+  while it is not expired yet. The data that are stored for each token
+  are: access_token, expires_in, token_type, scope, refresh_token and
+  expiration_time. They are the values that come from the oauth2
+  server, except the last one, which is calculated as (REQUEST_TIME +
+  expires_in).
+
+  When the token has expired (expiration_time > time() + 10), a new
+  token is requested from the oauth2 server, using the refresh_token.
+  If the refresh token fails for some reason (maybe refresh_token
+  expired or any other reason), then the whole process of
+  authorization is performed from the beginning.
+
+  For the client-credentials and user-password authorization flows
+  this does not involve a user interaction with the oauth2 server.
+
+  However, for the server-side flow the user has to authorize again
+  the application. This is done in these steps, first the user is
+  redirected to the oauth2 server to authorize the application again,
+  from there it is redirected back to the application with an
+  authorization code, then the application uses the authorization code
+  to request a new access token.
+
+  In order to remember the part of the client application that
+  initiated the authorization request, a session variable is used:
+  $_SESSION['oauth2_client_destination'].  Then, drupal_goto() is used
+  to jump again to that path of the application.
