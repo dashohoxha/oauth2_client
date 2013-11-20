@@ -1,6 +1,7 @@
 <?php
 /**
- * This is a wrapper for the PHP-OAuth2 client library,
+ * @file
+ * A wrapper for the PHP-OAuth2 client library,
  * which makes it suitable to be used in Drupal.
  */
 
@@ -115,8 +116,7 @@ class OAuth2Client {
    *    - username :: username of the resource owner
    *    - password :: password of the resource owner
    */
-  public function __construct($auth_flow, $client_id, $client_secret,
-			      $token_endpoint, $params = array()) {
+  public function __construct($auth_flow, $client_id, $client_secret, $token_endpoint, $params = array()) {
     $this->auth_flow = $auth_flow;
     $this->client_id = $client_id;
     $this->client = new OAuth2\Client($client_id, $client_secret);
@@ -209,15 +209,9 @@ class OAuth2Client {
     return $oauth2_client;
   }
 
-  /*
-  public function fetch($url, $params = array()) {
-    $this->getAccessToken();
-    return $this->client->fetch($url, $params);
-  }
-  */
-
   /**
    * Get and return an access token.
+   *
    * If there is an existing token (stored in session),
    * return that one. But if the existing token is expired,
    * get a new one from the authorization server.
@@ -252,7 +246,8 @@ class OAuth2Client {
     $_SESSION['oauth2_token'][$this->client_id] = $token;
     $this->client->setAccessToken($token['access_token']);
 
-    // Redirect to the original path (if this is a redirection from the server-side flow).
+    // Redirect to the original path (if this is a redirection
+    // from the server-side flow).
     if (isset($_SESSION['oauth2_client_destination'])) {
       $destination = $_SESSION['oauth2_client_destination'];
       unset($_SESSION['oauth2_client_destination']);
@@ -293,6 +288,7 @@ class OAuth2Client {
 
   /**
    * Get an access token from the authorization server
+   *
    * with the user-password flow. Besides the client_id
    * and the client_secret this flow needs also the username
    * and password of the recourse owner. The client must be

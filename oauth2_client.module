@@ -67,7 +67,7 @@ function oauth2_client_get_all() {
 }
 
 /**
- * Implements hook_oauth2_clients(). Defines test clients.
+ * Implements hook_oauth2_clients().
  */
 function oauth2_client_oauth2_clients() {
   // For testing user-password flow.
@@ -117,7 +117,6 @@ function oauth2_client_load($name) {
     throw new Exception("No client with name '$name' is defined.");
   }
   $oauth2_client = OAuth2Client::create($oauth2_clients[$name]);
-  // D: print '<xmp>';  print_r($oauth2_client);  print '</xmp>';  exit(0);  //debug
   return $oauth2_client;
 }
 
