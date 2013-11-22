@@ -1,7 +1,7 @@
 <?php
 /**
  * @file
- * Provides OAuth2 server functionality.
+ * Provides OAuth2 client functionality.
  */
 
 /**
@@ -66,44 +66,6 @@ function oauth2_client_get_all() {
 }
 
 /**
- * Implements hook_oauth2_clients().
- */
-function oauth2_client_oauth2_clients() {
-  global $base_url;
-  $server_url = 'https://dev.l10n.org.xx';
-
-  // For testing user-password flow.
-  $oauth2_clients['test1'] = array(
-    'token_endpoint' => $server_url . '/oauth2/token',
-    'auth_flow' => 'user-password',
-    'client_id' => 'test2',
-    'client_secret' => 'test2',
-    'username' => 'user1',
-    'password' => 'user1',
-  );
-
-  // For testing client-credentials flow.
-  $oauth2_clients['test2'] = array(
-    'token_endpoint' => $server_url . '/oauth2/token',
-    'auth_flow' => 'client-credentials',
-    'client_id' => 'test2',
-    'client_secret' => 'test2',
-  );
-
-  // For testing server-side flow.
-  $oauth2_clients['test3'] = array(
-    'token_endpoint' => $server_url . '/oauth2/token',
-    'auth_flow' => 'server-side',
-    'client_id' => 'test1',
-    'client_secret' => 'test1',
-    'authorization_endpoint' => $server_url . '/oauth2/authorize',
-    'redirect_uri' => $base_url . '/oauth2/authorized',
-  );
-
-  return $oauth2_clients;
-}
-
-/**
  * Load an oauth2 client.
  *
  * @param string $name
@@ -132,11 +94,6 @@ function oauth2_client_menu() {
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
   );
-  $items['oauth2/test'] = array(
-    'page callback' => 'oauth2_client_test',
-    'access callback' => TRUE,
-    'type' => MENU_CALLBACK,
-  );
   return $items;
 }
 
@@ -152,34 +109,4 @@ function oauth2_client_authorized() {
     $destination = $_SESSION['oauth2_client_destination'];
     drupal_goto($destination, array('query' => $_REQUEST));
   }
-}
-
-/**
- * Trying test clients.
- *
- * Call them by opening in browser:
- *   - $base_url/oauth2/test/1
- *   - $base_url/oauth2/test/2
- *   - $base_url/oauth2/test/3
- */
-function oauth2_client_test($nr) {
-  try {
-    // Get an access token.
-    $client_name = 'test' . $nr;
-    $oauth2_client = oauth2_client_load($client_name);
-    $access_token = $oauth2_client->getAccessToken();
-  }
-  catch (Exception $e) {
-    drupal_set_message($e->getMessage(), 'error');
-    print $e->getMessage();
-    print '<xmp>';  print_r($e);  print '</xmp>';
-    return;
-  }
-
-  // Get a resource and output it.
-  $server_url = "https://dev.l10n.org.xx";
-  $url = "$server_url/btr/translations/next?lng=sq&access_token=$access_token";
-  $response = drupal_http_request($url);
-  $response->data = json_decode($response->data);
-  print '<xmp>';  print_r($response);  print '</xmp>';
 }
