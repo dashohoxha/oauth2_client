@@ -273,7 +273,7 @@ class OAuth2Client {
     );
 
     if ($response['code'] != 200) {
-      throw new Exeption(t('Failed to get an access token with client credentials.'));
+      throw new Exception(t('Failed to get an access token with client credentials.'));
     }
 
     return $response['result'];
@@ -310,7 +310,7 @@ class OAuth2Client {
     );
 
     if ($response['code'] != 200) {
-      throw new Exeption(t('Failed to get an access token with owner password.'));
+      throw new Exception(t('Failed to get an access token with owner password.'));
     }
 
     return $response['result'];
