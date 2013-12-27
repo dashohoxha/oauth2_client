@@ -364,16 +364,8 @@ class OAuth2Client {
       $destination = $destination['destination'];
       $_SESSION['oauth2_client_destination'] = $destination;
 
-      $extra_params['state'] = drupal_get_token($this->clientId);
-      if ($this->scope) {
-        $extra_params['scope'] = $this->scope;
-      }
-      $auth_url = $this->client->getAuthenticationUrl(
-        $this->authorizationEndpoint,
-        $this->redirectUri,
-        $extra_params);
-      header('Location: ' . $auth_url);
-      die('Redirect');
+      $auth_url = $this->getAuthenticationUrl();
+      drupal_goto($auth_url);
     }
     else {
       // Check the 'state' parameter, to mittigate CSRF attacks.
@@ -395,5 +387,21 @@ class OAuth2Client {
 
       return $response['result'];
     }
+  }
+
+  /**
+   * Return the authentication url (used in case of the server-side flow).
+   */
+  public function getAuthenticationUrl() {
+    $extra_params['state'] = drupal_get_token($this->clientId);
+    if ($this->scope) {
+      $extra_params['scope'] = $this->scope;
+    }
+    $auth_url = $this->client->getAuthenticationUrl(
+      $this->authorizationEndpoint,
+      $this->redirectUri,
+      $extra_params
+    );
+    return $auth_url;
   }
 }
