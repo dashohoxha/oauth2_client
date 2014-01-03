@@ -65,6 +65,7 @@ time.
   from the oauth2_server, so that it can be used for accessing web
   services.
 
+
 * How it works
 
   An access token and its related data are stored on the session
@@ -95,3 +96,51 @@ time.
   initiated the authorization request, a session variable is used:
   $_SESSION['oauth2_client_destination'].  Then, drupal_goto() is used
   to jump again to that path of the application.
+
+
+* Integrating with other oauth2 clients
+
+  Other oauth2 clients for Drupal can integrate with oauth2_client.
+  This means that they can use the same client that is registered on
+  the oauth2_server for the oauth2_client.
+
+  The oauth2_server sends the authorization reply to the redirect_uri
+  that is registered for the client. If this client has been
+  registered for being used by the module oauth2_client, then its
+  redirect_uri is like this:
+  https://server.example.org/oauth2/authorized . A reply sent to this
+  redirect_uri will be routed to the callback function supplied by
+  oauth2_client. So, in general, the other oauth2 clients cannot use
+  the same client_id and client_secret that are registered in the
+  server. They will have to register their own client_id,
+  client_secret and redirect_uri.
+
+  However this is not very convenient. That's why oauth2_client allows
+  the other oauth2 clients to use the same client_id and
+  client_secret, but the reply has to pass through oauth2_client,
+  since redirect_uri sends it there.
+
+  It works like this: Suppose that another oauth2 client starts the
+  authentication workflow.  On the parameters of the request it sets
+  redirect_uri to the one belonging to oauth2_client (since this is
+  the one that is reckognized and accepted by the server). However at
+  the same time it notifies oauth2_client that the reply of this
+  request should be forwarded to it. It does it by calling the
+  function: oauth2_client_set_redirect($state, $redirect).
+
+  The parameter $state is the random parameter that is used on the
+  authentication url in order to mittigate CSRF attacks. In this case
+  it is used as a key for identifying the authentication request.  The
+  parameter $redirect is an associative array that contains the keys:
+    - uri: the uri of the oauth2 client that is requesting a
+      redirect
+    - params: associative array of other parameters that should be
+      appended to the uri, along with the $_REQUEST comming from the
+      server
+
+  Once another oauth2 client that has been successfully authenticated
+  and has received an access_token, it can share it with the
+  oauth2_client, so that oauth2_client does not have to repeat the
+  authentication process again. It can be done by calling the
+  function: oauth2_client_set_token($client_id, $token).
+

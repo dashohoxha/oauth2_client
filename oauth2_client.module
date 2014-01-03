@@ -98,15 +98,131 @@ function oauth2_client_menu() {
 }
 
 /**
- * Callback for path oauth/authorized.
+ * Callback for path oauth2/authorized.
  *
  * An authorized request in server-side flow
  * will be redirected here (having variables
  * 'code' and 'state').
  */
 function oauth2_client_authorized() {
+  // Redirect the authorization reply to another oauth2 client,
+  // if they have requested it.
+  oauth2_client_redirect();
+
+  // Call hook_oauth2_authorized() for all modules.
+  module_invoke_all('oauth2_authorized');
+
+  // Rdirect if there is a destination.
   if (isset($_SESSION['oauth2_client_destination'])) {
     $destination = $_SESSION['oauth2_client_destination'];
     drupal_goto($destination, array('query' => $_REQUEST));
+  }
+}
+
+/**
+ * Return the redirect_uri of oauth2_client.
+ */
+function oauth2_client_get_redirect_uri() {
+  return url('oauth2/authorized', array('absolute' => TRUE));
+}
+
+/**
+ * Set a redirect request.
+ *
+ * This can be used by other oauth2 clients to integrate with
+ * oauth2_client, i.e. to use the same client that is registered
+ * on the server for the oauth2_client.
+ *
+ * The oauth2_server sends the authorization reply to the
+ * redirect_uri that is registered for the client, which is
+ * the one corresponding to oauth2_client. If another oauth2
+ * client would like to get this authorization reply, it has
+ * to set a redirect request with this function, and then
+ * oauth2_client will forward the reply to it.
+ *
+ * @param string $state
+ *   The random parameter that is used on the authentication url
+ *   in order to mittigate CSRF attacks. In this case it is used
+ *   as a key for identifying the authentication request.
+ *
+ * @param array $redirect
+ *  Associative array that contains the keys:
+ *   - 'uri': the uri of the oauth2 client that is requesting a redirect
+ *   - 'params': associative array of other parameters that should be
+ *     appended to the uri, along with the $_REQUEST
+ *
+ * Example:
+ *   $state = md5(uniqid(rand(), TRUE));
+ *   $hybridauth_config['state'] = $state;
+ *   $hybridauth_config['redirect_uri'] = oauth2_client_get_redirect_uri();
+ *   oauth2_client_set_redirect($state, array(
+ *       'uri' => 'hybridauth/endpoint',
+ *       'params' => array(
+ *         'hauth.done' => 'DrupalOAuth2',
+ *       )
+ *     ));
+ */
+function oauth2_client_set_redirect($state, $redirect) {
+  $_SESSION[$state] = $redirect;
+}
+
+/**
+ * Redirect (forward) the authorization reply to another oauth2 client.
+ *
+ * The other oauth2 client should have requested this redirect
+ * by calling the function oauth2_client_set_redirect() at the time
+ * of making an authentication request.
+ */
+function oauth2_client_redirect() {
+  if (!isset($_REQUEST['state']))  return;
+  $state = $_REQUEST['state'];
+
+  if (!isset($_SESSION[$state]))  return;
+  $redirect = $_SESSION[$state];
+  unset($_SESSION[$state]);
+
+  drupal_goto($redirect['uri'],
+    array('query' => $redirect['params'] + $_REQUEST)
+  );
+}
+
+/**
+ * Share an access token with oauth2_client.
+ *
+ * Another oauth2 client that has been successfully authenticated
+ * and has received an access_token, can share it with oauth2_client,
+ * so that oauth2_client does not have to repeat the authentication
+ * process again.
+ *
+ * Example:
+ *   $client_id = $hybridauth->api->client_id;
+ *   $token = array(
+ *     'access_token' => $hybridauth->api->access_token,
+ *     'refresh_token' => $hybridauth->api->refresh_token,
+ *     'expires_in' => $hybridauth->api->access_token_expires_in,
+ *     'expiration_time' => $hybridauth->api->access_token_expires_at,
+ *     'scope' => $hybridauth->scope,
+ *   );
+ *   oauth2_client_set_token($client_id, $token);
+ */
+function oauth2_client_set_token($client_id, $token) {
+  $_SESSION['oauth2_token'][$client_id] = $token;
+}
+
+/**
+ * Returns the access token of the oauth2_client for the given $client_id.
+ */
+function oauth2_client_get_token($client_id) {
+  if (isset($_SESSION['oauth2_token'][$client_id])) {
+    return $_SESSION['oauth2_token'][$client_id];
+  }
+  else {
+    return array(
+      'access_token' => NULL,
+      'refresh_token' => NULL,
+      'expires_in' => NULL,
+      'expiration_time' => NULL,
+      'scope' => NULL,
+    );
   }
 }
