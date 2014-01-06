@@ -1,7 +1,5 @@
 
-This module is a wrapper for the PHP-OAuth2 client library, which
-makes it suitable to be used in Drupal. It is designed as a complement
-to the module oauth2_server.
+This module is a a complement to the module oauth2_server.
 
 *Note:* The modules oauth2_server and oauth2_client have conflicts
 with the module oauth2, so they should not be installed at the same

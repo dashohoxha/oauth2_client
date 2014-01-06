@@ -1,17 +1,8 @@
 <?php
 /**
  * @file
- * A wrapper for the PHP-OAuth2 client library,
- * which makes it suitable to be used in Drupal.
+ * class OAuth2Client
  */
-
-$php_oauth2_path = libraries_get_path('PHP-OAuth2');
-require $php_oauth2_path . '/Client.php';
-require $php_oauth2_path . '/GrantType/IGrantType.php';
-require $php_oauth2_path . '/GrantType/AuthorizationCode.php';
-require $php_oauth2_path . '/GrantType/RefreshToken.php';
-require $php_oauth2_path . '/GrantType/ClientCredentials.php';
-require $php_oauth2_path . '/GrantType/Password.php';
 
 /**
  * The class OAuth2Client is used to get authorization from
@@ -27,54 +18,33 @@ require $php_oauth2_path . '/GrantType/Password.php';
  */
 class OAuth2Client {
   /**
-   * Type of the authorization flow (https://drupal.org/node/1958718)
-   * Can be: server-side | client-credentials | user-password
+   * Associative array of the parameters that are needed
+   * by the different types of authorization flows.
+   *  - auth_flow :: server-side | client-credentials | user-password
+   *  - client_id :: Client ID, as registered on the oauth2 server
+   *  - client_secret :: Client secret, as registered on the oauth2 server
+   *  - token_endpoint :: something like:
+   *       https://oauth2_server.example.org/oauth2/token
+   *  - authorization_endpoint :: somethig like:
+   *       https://oauth2_server.example.org/oauth2/authorize
+   *  - redirect_uri :: something like:
+   *       url('oauth2/authorized', array('absolute' => TRUE)) or
+   *       https://oauth2_client.example.org/oauth2/authorized
+   *  - scope :: requested scopes, separated by a space
+   *  - username :: username of the resource owner
+   *  - password :: password of the resource owner
    */
-  protected $authFlow = 'server-side';
-
-  /**
-   * Id of the client.
-   */
-  protected $clientId = NULL;
-
-  /**
-   * The delegate OAuth2\Client object, from PHP-OAuth2 library
-   * which actually performs the core functionality of authorization.
-   */
-  protected $client;
-
-  /**
-   * The URI that is used to get the token. Something like:
-   *   url('oauth2/token', array('absolute' => TRUE));
-   */
-  protected $tokenEndpoint = NULL;
-
-  /**
-   * The URI that is used to get the authorization code
-   * (used only on the 'server-side' flow). Something like:
-   *   url('oauth2/authorize', array('absolute' => TRUE));
-   */
-  protected $authorizationEndpoint = NULL;
-
-  /**
-   * The URI to which to redirect and send the authorization code
-   * (used only on the 'server-side' flow). Something like:
-   *   url('oauth2/authorized', array('absolute' => TRUE));
-   */
-  protected $redirectUri = NULL;
-
-  /**
-   * Scopes that need to be authorized by the user,
-   * separated by a space.
-   */
-  protected $scope = NULL;
-
-  /**
-   * Username and password of the user (resource owner).
-   * Used only on the user-password flow.
-   */
-  protected $username = NULL;
-  protected $password = NULL;
+  protected $params = array(
+    'auth_flow' => NULL,
+    'client_id' => NULL,
+    'client_secret' => NULL,
+    'token_endpoint' => NULL,
+    'authorization_endpoint' => NULL,
+    'redirect_uri' => NULL,
+    'scope' => NULL,
+    'username' => NULL,
+    'password' => NULL,
+  );
 
   /**
    * Associated array that keeps data about the access token.
@@ -91,115 +61,25 @@ class OAuth2Client {
   /**
    * Construct an OAuth2Client object.
    *
-   * @param string $auth_flow
-   *   Can be: server-side | client-credentials | user-password
-   *
-   * @param string $client_id
-   *   Client ID, as registered on the oauth2 server.
-   *
-   * @param string $client_secret
-   *   Client secret, as registered on the oauth2 server.
-   *
-   * @param string $token_endpoint
-   *   Something like: https://oauth2_server.example.org/oauth2/token
-   *
    * @param array $params
-   *   Associative array of additional params that are needed
+   *   Associative array of the parameters that are needed
    *   by the different types of authorization flows.
-   *   These parameters can be:
-   *    - authorization_endpoint :: somethig like:
-   *         https://oauth2_server.example.org/oauth2/authorize
-   *    - redirect_uri :: something like:
-   *         url('oauth2/authorized', array('absolute' => TRUE)) or
-   *         https://oauth2_client.example.org/oauth2/authorized
-   *    - scope :: requested scopes, separated by a space
-   *    - username :: username of the resource owner
-   *    - password :: password of the resource owner
    */
-  public function __construct($auth_flow, $client_id, $client_secret, $token_endpoint, $params = array()) {
-    $this->authFlow = $auth_flow;
-    $this->clientId = $client_id;
-    $this->client = new OAuth2\Client($client_id, $client_secret);
-    $this->tokenEndpoint = $token_endpoint;
-
-    // Set optional variables, if they are provided on the $params.
-    if (isset($params['authorization_endpoint'])) {
-      $this->authorizationEndpoint = $params['authorization_endpoint'];
-    }
-    if (isset($params['redirect_uri'])) {
-      $this->redirectUri = $params['redirect_uri'];
-    }
-    if (isset($params['scope'])) {
-      $this->scope = $params['scope'];
-    }
-    if (isset($params['username'])) {
-      $this->username = $params['username'];
-    }
-    if (isset($params['password'])) {
-      $this->password = $params['password'];
-    }
+  public function __construct($params = NULL) {
+    if ($params) $this->params = $params;
 
     // Get the token data from the session, if it is stored there.
-    if (isset($_SESSION['oauth2_token'][$this->clientId])) {
-      $this->token = $_SESSION['oauth2_token'][$this->clientId];
+    $client_id = $params['client_id'];
+    if (isset($_SESSION['oauth2_token'][$client_id])) {
+      $this->token = $_SESSION['oauth2_token'][$client_id];
     }
   }
 
   /**
    * Factory method to create a new OAuth2Client object.
-   *
-   * All the neccessary parameters are given as an associative array.
-   *
-   * @return OAuth2Client
-   *   Returns an OAuth2Client object.
-   *
-   * @example
-   *    $oauth2_client = OAuth2Client::create(array(
-   *      'auth_flow' => 'user-password',
-   *      'client_id' => 'client1',
-   *      'client_secret' => 'secret1',
-   *      'token_endpoint' => 'https://oath2_server.example.org/oath2/token',
-   *      'username' => 'user1',
-   *      'password' => 'passw1',
-   *    ));
    */
   public static function create($params) {
-    $auth_flow = $params['auth_flow'];
-    if ($auth_flow == 'client-credentials') {
-      return new OAuth2Client(
-        'client-credentials',
-        $params['client_id'],
-        $params['client_secret'],
-        $params['token_endpoint']
-      );
-    }
-    elseif ($auth_flow == 'user-password') {
-      return new OAuth2Client(
-        'user-password',
-        $params['client_id'],
-        $params['client_secret'],
-        $params['token_endpoint'],
-        array(
-          'username' => $params['username'],
-          'password' => $params['password'],
-        )
-      );
-    }
-    elseif ($auth_flow == 'server-side') {
-      return new OAuth2Client(
-        'server-side',
-        $params['client_id'],
-        $params['client_secret'],
-        $params['token_endpoint'],
-        array(
-          'authorization_endpoint' => $params['authorization_endpoint'],
-          'redirect_uri' => $params['redirect_uri'],
-        )
-      );
-    }
-    else {
-      throw new Exception("Unknown authorization flow type: '$auth_flow'");
-    }
+    return new OAuth2Client($params);
   }
 
   /**
@@ -217,103 +97,48 @@ class OAuth2Client {
       return $this->token['access_token'];
     }
 
-    // Get token data.
-    switch ($this->authFlow) {
-      case 'server-side':
-        $token = $this->getTokenServerSide();
-        break;
+    try {
+      // Try to use refresh_token.
+      $token = $this->getTokenRefreshToken();
+    }
+    catch (Exception $e) {
+      // Get a token.
+      switch ($this->params['auth_flow']) {
+        default:
+        case 'client-credentials':
+          $token = $this->getToken(array(
+                     'grant_type' => 'client_credentials',
+                     'scope' => $this->params['scope'],
+                   ));
+          break;
 
-      case 'user-password':
-        $token = $this->getTokenUserPassword();
-        break;
+        case 'user-password':
+          $token = $this->getToken(array(
+                     'grant_type' => 'password',
+                     'username' => $this->params['username'],
+                     'password' => $this->params['password'],
+                     'scope' => $this->params['scope'],
+                   ));
+          break;
 
-      default:
-      case 'client-credentials':
-        $token = $this->getTokenClientCredentials();
-        break;
+        case 'server-side':
+          $token = $this->getTokenServerSide();
+          break;
+      }
     }
     $token['expiration_time'] = REQUEST_TIME + $token['expires_in'];
 
     // Store the token (on session as well).
     $this->token = $token;
-    $_SESSION['oauth2_token'][$this->clientId] = $token;
-    $this->client->setAccessToken($token['access_token']);
+    $client_id = $this->params['client_id'];
+    $_SESSION['oauth2_token'][$client_id] = $token;
 
     // Redirect to the original path (if this is a redirection
     // from the server-side flow).
-    if (isset($_SESSION['oauth2_client_destination'])) {
-      $destination = $_SESSION['oauth2_client_destination'];
-      unset($_SESSION['oauth2_client_destination']);
-      unset($_REQUEST['code']);
-      unset($_REQUEST['state']);
-      drupal_goto($destination, array('query' => $_REQUEST));
-    }
+    $this->redirectToOriginalPath();
 
     // Return the token.
     return $token['access_token'];
-  }
-
-  /**
-   * Get an access token with the client-credentials flow.
-   *
-   * This flow needs only a client_id and a client_secret. These must be
-   * registered on the oauth2 server and the server must allow the
-   * client-credentials grant type.
-   */
-  protected function getTokenClientCredentials() {
-    $params = array();
-    if (isset($this->scope)) {
-      $params['scope'] = $this->scope;
-    }
-
-    $response = $this->client->getAccessToken(
-      $this->tokenEndpoint,
-      'client_credentials',
-      $params
-    );
-
-    if ($response['code'] != 200) {
-      throw new Exception(t('Failed to get an access token with client credentials.'));
-    }
-
-    return $response['result'];
-  }
-
-  /**
-   * Get an access token from the authorization server.
-   *
-   * with the user-password flow. Besides the client_id
-   * and the client_secret this flow needs also the username
-   * and password of the recourse owner. The client must be
-   * registered on the oauth2 server, and the user must have
-   * an account in it.
-   */
-  protected function getTokenUserPassword() {
-    // Try to get a token using the refresh token.
-    $token = $this->getTokenRefreshToken();
-    if ($token) {
-      return $token;
-    }
-
-    $params = array(
-      'username' => $this->username,
-      'password' => $this->password,
-    );
-    if (isset($this->scope)) {
-      $params['scope'] = $this->scope;
-    }
-
-    $response = $this->client->getAccessToken(
-      $this->tokenEndpoint,
-      'password',
-      $params
-    );
-
-    if ($response['code'] != 200) {
-      throw new Exception(t('Failed to get an access token with owner password.'));
-    }
-
-    return $response['result'];
   }
 
   /**
@@ -322,26 +147,15 @@ class OAuth2Client {
    * This is used for the server-side and user-password
    * flows (not for client-credentials, there is no
    * refresh_token in it).
-   * Returns NULL if getting an access_token fails.
    */
   protected function getTokenRefreshToken() {
-    $refresh_token = $this->token['refresh_token'];
-    if (!$refresh_token) {
-      return NULL;
+    if (!$this->token['refresh_token']) {
+      throw new Exception(t('There is no refresh_token.'));
     }
-
-    $response = $this->client->getAccessToken(
-      $this->tokenEndpoint,
-      'refresh_token',
-      array('refresh_token' => $refresh_token)
-    );
-
-    if ($response['code'] != 200) {
-      // $refresh_token expired or invalid.
-      return NULL;
-    }
-
-    return $response['result'];
+    return $this->getToken(array(
+        'grant_type' => 'refresh_token',
+        'refresh_token' => $this->token['refresh_token'],
+      ));
   }
 
   /**
@@ -350,42 +164,53 @@ class OAuth2Client {
    * This is done in two steps:
    *   - First, a redirection is done to the authorization
    *     endpoint, in order to request an authorization code.
-   *   - Second, using this code an access_token is requested.
+   *   - Second, using this code, an access_token is requested.
    */
   protected function getTokenServerSide() {
-    // Try to get a token using the refresh token.
-    $token = $this->getTokenRefreshToken();
-    if ($token) {
-      return $token;
-    }
-
     if (!isset($_GET['code'])) {
-      $destination = drupal_get_destination();
-      $destination = $destination['destination'];
-      $_SESSION['oauth2_client_destination'] = $destination;
-
-      $auth_url = $this->getAuthenticationUrl();
-      drupal_goto($auth_url);
+      $this->saveDrupalDestination();
+      drupal_goto($this->getAuthenticationUrl());
     }
     else {
-      // Check the 'state' parameter, to mittigate CSRF attacks.
-      if (!drupal_valid_token($_GET['state'], $this->clientId)) {
-        throw new Exception(t('The state does not validate, the received token is not trustable.'));
-      }
-
-      $response = $this->client->getAccessToken(
-        $this->tokenEndpoint,
-        'authorization_code',
-        array(
+      $this->checkStateParameter();
+      return $this->getToken(array(
+          'grant_type' => 'authorization_code',
           'code' => $_GET['code'],
-          'redirect_uri' => $this->redirectUri,
+          'redirect_uri' => $this->params['redirect_uri'],
         ));
+    }
+  }
 
-      if ($response['code'] != 200) {
-        throw new Exception(t('Failed to get an access token with authorization code.'));
-      }
+  /**
+   * Save the destination to redirect after getting the token.
+   */
+  protected function saveDrupalDestination() {
+    $destination = drupal_get_destination();
+    $destination = $destination['destination'];
+    $_SESSION['oauth2_client_destination'] = $destination;
+  }
 
-      return $response['result'];
+  /**
+   * Redirect to the original path (if this is a redirection
+   * from the server-side flow).
+   */
+  protected function redirectToOriginalPath() {
+    if (isset($_SESSION['oauth2_client_destination'])) {
+      $destination = $_SESSION['oauth2_client_destination'];
+      unset($_SESSION['oauth2_client_destination']);
+      unset($_REQUEST['code']);
+      unset($_REQUEST['state']);
+      drupal_goto($destination, array('query' => $_REQUEST));
+    }
+  }
+
+  /**
+   * Check the 'state' parameter, to mittigate CSRF attacks.
+   */
+  protected function checkStateParameter() {
+    $client_id = $this->params['client_id'];
+    if (!drupal_valid_token($_GET['state'], $client_id)) {
+      throw new Exception(t('The state does not validate, the received token is not trustable.'));
     }
   }
 
@@ -393,15 +218,45 @@ class OAuth2Client {
    * Return the authentication url (used in case of the server-side flow).
    */
   public function getAuthenticationUrl() {
-    $extra_params['state'] = drupal_get_token($this->clientId);
-    if ($this->scope) {
-      $extra_params['scope'] = $this->scope;
-    }
-    $auth_url = $this->client->getAuthenticationUrl(
-      $this->authorizationEndpoint,
-      $this->redirectUri,
-      $extra_params
+    $query_params = array(
+      'response_type' => 'code',
+      'client_id'     => $this->params['client_id'],
+      'redirect_uri'  => $this->params['redirect_uri'],
+      'state' => drupal_get_token($this->params['client_id'])
     );
-    return $auth_url;
+    if ($this->params['scope']) {
+      $query_params['scope'] = $this->params['scope'];
+    }
+    $endpoint = $this->params['authorization_endpoint'];
+    return $endpoint . '?' . http_build_query($query_params);
+  }
+
+  /**
+   * Get and return an access token for the grant_type given in $params.
+   */
+  protected function getToken($data) {
+    if (isset($data['scope']) and $data['scope'] == NULL) {
+      unset($data['scope']);
+    }
+
+    $client_id = $this->params['client_id'];
+    $client_secret = $this->params['client_secret'];
+    $token_endpoint = $this->params['token_endpoint'];
+
+    $options = array(
+      'method' => 'POST',
+      'data' => http_build_query($data),
+      'headers' => array(
+        'Content-Type' => 'application/x-www-form-urlencoded',
+        'Authorization' => 'Basic ' . base64_encode("$client_id:$client_secret"),
+      ),
+    );
+    $result = drupal_http_request($token_endpoint, $options);
+
+    if ($result->code != 200) {
+      throw new Exception(t('Failed to get an access token of grant_type !grant_type.', array('!grant_type' => $data['grant_type'])));
+    }
+
+    return (Array) json_decode($result->data);
   }
 }

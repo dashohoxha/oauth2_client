@@ -5,49 +5,6 @@
  */
 
 /**
- * Implements hook_init().
- *
- * Nags the user about the missing library on OAuth2 admin pages.
- */
-function oauth2_client_init() {
-  $item = menu_get_item();
-  if ($item['access'] && strpos($item['path'], 'admin/structure/oauth2-clients') === 0) {
-    $path = oauth2_client_get_library_path();
-    // Check for the existence of one file from the library.
-    if (!$path || !file_exists($path . '/Client.php')) {
-      drupal_set_message(t('The PHP-OAuth2 client library is required for the oauth2_client module to function.
-        Download the library from <a href="https://github.com/adoy/PHP-OAuth2" target="_blank">GitHub</a> and place it in <em>!path</em>.', array('!path' => $path)), 'error');
-    }
-  }
-}
-
-/**
- * Implements hook_libraries_info().
- */
-function oauth2_client_libraries_info() {
-  $libraries = array();
-  $libraries['PHP-OAuth2'] = array(
-    'name' => 'OAuth2 Client',
-    'vendor url' => 'https://github.com/adoy/PHP-OAuth2',
-  );
-  return $libraries;
-}
-
-/**
- * Returns the filesystem path to the PHP-OAuth2 library.
- */
-function oauth2_client_get_library_path() {
-  $path = 'sites/all/libraries/PHP-OAuth2';
-  // If installed, use the Libraries API to locate the library.
-  if (module_exists('libraries')) {
-    module_load_include('module', 'libraries');
-    $path = libraries_get_path('PHP-OAuth2');
-  }
-
-  return $path;
-}
-
-/**
  * Gets all defined oauth2_clients.
  */
 function oauth2_client_get_all() {
@@ -80,7 +37,7 @@ function oauth2_client_load($name) {
   if (!isset($oauth2_clients[$name])) {
     throw new Exception("No client with name '$name' is defined.");
   }
-  $oauth2_client = OAuth2Client::create($oauth2_clients[$name]);
+  $oauth2_client = new OAuth2Client($oauth2_clients[$name]);
   return $oauth2_client;
 }
 
@@ -112,7 +69,7 @@ function oauth2_client_authorized() {
   // Call hook_oauth2_authorized() for all modules.
   module_invoke_all('oauth2_authorized');
 
-  // Rdirect if there is a destination.
+  // Redirect if there is a destination.
   if (isset($_SESSION['oauth2_client_destination'])) {
     $destination = $_SESSION['oauth2_client_destination'];
     drupal_goto($destination, array('query' => $_REQUEST));

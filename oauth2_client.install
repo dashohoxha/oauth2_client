@@ -4,31 +4,3 @@
  * Install funcions.
  */
 
-/**
- * Implements hook_requirements().
- */
-function oauth2_client_requirements($phase = 'runtime') {
-  $requirements = array();
-  $t = get_t();
-
-  if ($phase == 'runtime') {
-    $found = FALSE;
-    $path = oauth2_client_get_library_path();
-    // Check for the existence of one file from the library.
-    if ($path && file_exists($path . '/Client.php')) {
-      $found = TRUE;
-    }
-    // Prepare the download instructions.
-    $description = $t('The PHP-OAuth2 client library is required for the oauth2_client module to function.
-      Download the library from <a href="https://github.com/adoy/PHP-OAuth2" target="_blank">GitHub</a> and place it in <em>!path</em>.', array('!path' => $path));
-
-    $requirements['oauth2_client'] = array(
-      'title' => $t('PHP-OAuth2 client library'),
-      'value' => $found ? $t('Available') : $t('Unavailable'),
-      'description' => !$found ? $description : NULL,
-      'severity' => $found ? REQUIREMENT_OK : REQUIREMENT_ERROR,
-    );
-  }
-
-  return $requirements;
-}
