@@ -76,13 +76,6 @@ class OAuth2Client {
   }
 
   /**
-   * Factory method to create a new OAuth2Client object.
-   */
-  public static function create($params) {
-    return new OAuth2Client($params);
-  }
-
-  /**
    * Get and return an access token.
    *
    * If there is an existing token (stored in session),
