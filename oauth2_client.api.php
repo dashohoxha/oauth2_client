@@ -1,25 +1,50 @@
 <?php
 /**
  * @file
- * Provides OAuth2 client functionality.
+ * The programing interface provided by the module oauth2_client.
  */
 
 /**
- * Gets all defined oauth2_clients.
+ * Define oauth2 clients.
+ *
+ * @return Array
+ *   Associative array of oauth2 clients.
  */
-function oauth2_client_get_all() {
-  $data = array();
-  foreach (module_implements('oauth2_clients') as $module) {
-    $result = call_user_func($module . '_oauth2_clients');
-    if (isset($result) && is_array($result)) {
-      foreach ($result as $name => $item) {
-        $item += array('module' => $module);
-        $data[$name] = $item;
-      }
-    }
-  }
-  drupal_alter('oauth2_clients', $data);
-  return $data;
+function hook_oauth2_clients() {
+  global $base_url;
+  $server_url = 'https://oauth2_server.example.org';
+
+  $oauth2_clients = array();
+
+  // Using user-password flow.
+  $oauth2_clients['test1'] = array(
+    'token_endpoint' => $server_url . '/oauth2/token',
+    'auth_flow' => 'user-password',
+    'client_id' => 'client1',
+    'client_secret' => 'secret1',
+    'username' => 'user1',
+    'password' => 'pass1',
+  );
+
+  // Uding client-credentials flow.
+  $oauth2_clients['test2'] = array(
+    'token_endpoint' => $server_url . '/oauth2/token',
+    'auth_flow' => 'client-credentials',
+    'client_id' => 'client2',
+    'client_secret' => 'secret2',
+  );
+
+  // Using server-side flow.
+  $oauth2_clients['test3'] = array(
+    'token_endpoint' => $server_url . '/oauth2/token',
+    'auth_flow' => 'server-side',
+    'client_id' => 'client3',
+    'client_secret' => 'secret3',
+    'authorization_endpoint' => $server_url . '/oauth2/authorize',
+    'redirect_uri' => $base_url . '/oauth2/authorized',
+  );
+
+  return $oauth2_clients;
 }
 
 /**
@@ -30,48 +55,12 @@ function oauth2_client_get_all() {
  *
  * @return OAuth2Client
  *   Returns an OAuth2Client object
- */
-function oauth2_client_load($name) {
-  $oauth2_clients = oauth2_client_get_all();
-
-  if (!isset($oauth2_clients[$name])) {
-    throw new Exception("No client with name '$name' is defined.");
-  }
-  $oauth2_client = new OAuth2Client($oauth2_clients[$name]);
-  return $oauth2_client;
-}
-
-/**
- * Implements hook_menu().
- */
-function oauth2_client_menu() {
-  $items = array();
-  $items['oauth2/authorized'] = array(
-    'page callback' => 'oauth2_client_authorized',
-    'access callback' => TRUE,
-    'type' => MENU_CALLBACK,
-  );
-  return $items;
-}
-
-/**
- * Callback for path oauth2/authorized.
  *
- * An authorized request in server-side flow
- * will be redirected here (having variables
- * 'code' and 'state').
+ * Example:
+ *   $test1 = oauth2_client_load('test1');
+ *   $access_token = $test1->getAccessToken();
  */
-function oauth2_client_authorized() {
-  // Redirect the authorization reply to another oauth2 client,
-  // if they have requested it.
-  oauth2_client_redirect();
-
-  // Redirect if there is a destination.
-  if (isset($_SESSION['oauth2_client_destination'])) {
-    $destination = $_SESSION['oauth2_client_destination'];
-    drupal_goto($destination, array('query' => $_REQUEST));
-  }
-}
+function oauth2_client_load($name);
 
 /**
  * Return the redirect_uri of oauth2_client.
@@ -118,26 +107,6 @@ function oauth2_client_get_redirect_uri() {
  */
 function oauth2_client_set_redirect($state, $redirect) {
   $_SESSION[$state] = $redirect;
-}
-
-/**
- * Redirect (forward) the authorization reply to another oauth2 client.
- *
- * The other oauth2 client should have requested this redirect
- * by calling the function oauth2_client_set_redirect() at the time
- * of making an authentication request.
- */
-function oauth2_client_redirect() {
-  if (!isset($_REQUEST['state']))  return;
-  $state = $_REQUEST['state'];
-
-  if (!isset($_SESSION[$state]))  return;
-  $redirect = $_SESSION[$state];
-  unset($_SESSION[$state]);
-
-  drupal_goto($redirect['uri'],
-    array('query' => $redirect['params'] + $_REQUEST)
-  );
 }
 
 /**
