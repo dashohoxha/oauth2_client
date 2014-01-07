@@ -66,7 +66,7 @@ class OAuth2Client {
    *   by the different types of authorization flows.
    */
   public function __construct($params = NULL) {
-    if ($params) $this->params = $params;
+    if ($params) $this->params += $params;
 
     // Get the token data from the session, if it is stored there.
     $client_id = $params['client_id'];

@@ -4,3 +4,4 @@ package = "OAuth2"
 core = 7.x
 
 dependencies[] = oauth2_client
+dependencies[] = oauth2_server
