@@ -20,7 +20,7 @@ class OAuth2ClientTestCase extends DrupalWebTestCase {
   }
 
   public function setUp() {
-    parent::setUp(array('oauth2_client_test'));
+    parent::setUp('oauth2_client_test');
   }
 
   /**
@@ -28,5 +28,6 @@ class OAuth2ClientTestCase extends DrupalWebTestCase {
    */
   public function testClientCredentialsFlow() {
     $result = $this->drupalGet('oauth2/test/client-credentials');
+    debug($result);
   }
 }

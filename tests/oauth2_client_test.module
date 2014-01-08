@@ -10,34 +10,91 @@
 function oauth2_client_test_oauth2_clients() {
   $oauth2_clients = array();
 
-  // For testing client-credentials flow.
-  $oauth2_clients['client-credentials'] = array(
+  $common = array(
     'token_endpoint' => url('oauth2/token', array('absolute' => TRUE)),
-    'auth_flow' => 'client-credentials',
     'client_id' => 'client1',
     'client_secret' => 'secret1',
   );
+
+  // For testing client-credentials flow.
+  $oauth2_clients['client-credentials'] = array(
+    'auth_flow' => 'client-credentials',
+  ) + $common;
 
   // For testing user-password flow.
   $oauth2_clients['user-password'] = array(
-    'token_endpoint' => url('oauth2/token', array('absolute' => TRUE)),
     'auth_flow' => 'user-password',
-    'client_id' => 'client1',
-    'client_secret' => 'secret1',
     'username' => 'user1',
     'password' => 'pass1',
-  );
+  ) + $common;
 
   // For testing server-side flow.
   $oauth2_clients['server-side'] = array(
-    'token_endpoint' => url('oauth2/token', array('absolute' => TRUE)),
     'auth_flow' => 'server-side',
-    'client_id' => 'client1',
-    'client_secret' => 'secret1',
     'authorization_endpoint' => url('oauth2/authorize', array('absolute' => TRUE)),
     'redirect_uri' => url('oauth2/authorized',  array('absolute' => TRUE)),
     'scope' => 'scope1 scope2',
+  ) + $common;
+
+  // Test error handling.
+
+  $oauth2_clients['wrong-client-id'] = array(
+    'token_endpoint' => url('oauth2/token', array('absolute' => TRUE)),
+    'client_id' => 'client_1',
+    'client_secret' => 'secret1',
+    'auth_flow' => 'client-credentials',
   );
+
+  $oauth2_clients['wrong-client-secret'] = array(
+    'token_endpoint' => url('oauth2/token', array('absolute' => TRUE)),
+    'client_id' => 'client1',
+    'client_secret' => 'secret_1',
+    'auth_flow' => 'client-credentials',
+  );
+
+  $oauth2_clients['wrong-token-endpoint'] = array(
+    'token_endpoint' => url('oauth2/token_1', array('absolute' => TRUE)),
+    'client_id' => 'client1',
+    'client_secret' => 'secret1',
+    'auth_flow' => 'client-credentials',
+  );
+
+  $oauth2_clients['wrong-auth-flow'] = array(
+    'auth_flow' => 'client-credentials-1',
+  ) + $common;
+
+  $oauth2_clients['wrong-username'] = array(
+    'auth_flow' => 'user-password',
+    'username' => 'user_1',
+    'password' => 'pass1',
+  ) + $common;
+
+  $oauth2_clients['wrong-password'] = array(
+    'auth_flow' => 'user-password',
+    'username' => 'user1',
+    'password' => 'pass_1',
+  ) + $common;
+
+  $oauth2_clients['wrong-scope'] = array(
+    'auth_flow' => 'server-side',
+    'authorization_endpoint' => url('oauth2/authorize', array('absolute' => TRUE)),
+    'redirect_uri' => url('oauth2/authorized',  array('absolute' => TRUE)),
+    'scope' => 'scope1 scope2 scope3',
+  ) + $common;
+
+  $oauth2_clients['wrong-authorization-endpoint'] = array(
+    'auth_flow' => 'server-side',
+    'authorization_endpoint' => url('oauth2/authorize_1', array('absolute' => TRUE)),
+    'redirect_uri' => url('oauth2/authorized',  array('absolute' => TRUE)),
+    'scope' => 'scope1 scope2 scope3',
+  ) + $common;
+
+  $oauth2_clients['wrong-redirect-uri'] = array(
+    'auth_flow' => 'server-side',
+    'authorization_endpoint' => url('oauth2/authorize', array('absolute' => TRUE)),
+    'redirect_uri' => url('oauth2/authorized_1',  array('absolute' => TRUE)),
+    'scope' => 'scope1 scope2 scope3',
+  ) + $common;
 
   return $oauth2_clients;
 }
