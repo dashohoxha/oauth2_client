@@ -8,8 +8,10 @@
  * Implements hook_enable().
  */
 function oauth2_client_test_enable() {
-  _oauth2_client_test_delete();
+  oauth2_client_test_disable();
+
   _oauth2_client_test_create();
+  _oauth2_client_test_grant_permissions();
 }
 
 /**
@@ -17,10 +19,11 @@ function oauth2_client_test_enable() {
  */
 function oauth2_client_test_disable() {
   _oauth2_client_test_delete();
+  _oauth2_client_test_revoke_permissions();
 }
 
 /**
- * Create a test server, along with test clients ans scopes.
+ * Create a test server, along with test clients and scopes.
  */
 function _oauth2_client_test_create() {
   // Create the server and client.
@@ -136,5 +139,21 @@ function _oauth2_client_test_delete() {
   // Delete the test user.
   if ($user = user_load_by_name('user1')) {
     user_delete($user->uid);
+  }
+}
+
+function _oauth2_client_test_grant_permissions() {
+  // Make sure that users have the permission to use the oauth2 server.
+  foreach (array('anonymous user', 'authenticated user') as $role_name) {
+    $role = user_role_load_by_name($role_name);
+    user_role_grant_permissions($role->rid, array('use oauth2 server'));
+  }
+}
+
+function _oauth2_client_test_revoke_permissions() {
+  // Remove the permission for using the oauth2 server.
+  foreach (array('anonymous user', 'authenticated user') as $role_name) {
+    $role = user_role_load_by_name($role_name);
+    user_role_revoke_permissions($role->rid, array('use oauth2 server'));
   }
 }
