@@ -20,7 +20,7 @@ class OAuth2ClientTestCase extends DrupalWebTestCase {
   }
 
   public function setUp() {
-    parent::setUp('oauth2_client_test');
+    parent::setUp(array('oauth2_client_test', 'libraries'));
   }
 
   /**
