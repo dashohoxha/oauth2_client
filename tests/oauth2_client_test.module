@@ -76,9 +76,10 @@ function oauth2_client_test_oauth2_clients() {
   ) + $common;
 
   $oauth2_clients['wrong-scope'] = array(
-    'auth_flow' => 'server-side',
-    'authorization_endpoint' => url('oauth2/authorize', array('absolute' => TRUE)),
-    'redirect_uri' => url('oauth2/authorized',  array('absolute' => TRUE)),
+    'token_endpoint' => url('oauth2/token', array('absolute' => TRUE)),
+    'client_id' => 'client1',
+    'client_secret' => 'secret1',
+    'auth_flow' => 'client-credentials',
     'scope' => 'scope1 scope2 scope3',
   ) + $common;
 
@@ -86,14 +87,12 @@ function oauth2_client_test_oauth2_clients() {
     'auth_flow' => 'server-side',
     'authorization_endpoint' => url('oauth2/authorize_1', array('absolute' => TRUE)),
     'redirect_uri' => url('oauth2/authorized',  array('absolute' => TRUE)),
-    'scope' => 'scope1 scope2 scope3',
   ) + $common;
 
   $oauth2_clients['wrong-redirect-uri'] = array(
     'auth_flow' => 'server-side',
     'authorization_endpoint' => url('oauth2/authorize', array('absolute' => TRUE)),
     'redirect_uri' => url('oauth2/authorized_1',  array('absolute' => TRUE)),
-    'scope' => 'scope1 scope2 scope3',
   ) + $common;
 
   return $oauth2_clients;
@@ -119,6 +118,15 @@ function oauth2_client_test_menu() {
  *   - $base_url/oauth2/test/client-credentials
  *   - $base_url/oauth2/test/user-password
  *   - $base_url/oauth2/test/server-side
+ *   - $base_url/oauth2/test/wrong-client-id
+ *   - $base_url/oauth2/test/wrong-client-secret
+ *   - $base_url/oauth2/test/wrong-token-endpoint
+ *   - $base_url/oauth2/test/wrong-auth-flow
+ *   - $base_url/oauth2/test/wrong-username
+ *   - $base_url/oauth2/test/wrong-password
+ *   - $base_url/oauth2/test/wrong-scope
+ *   - $base_url/oauth2/test/wrong-authorization-endpoint
+ *   - $base_url/oauth2/test/wrong-redirect-uri
  */
 function oauth2_client_test_callback($client_name) {
   try {
@@ -128,6 +136,6 @@ function oauth2_client_test_callback($client_name) {
     print "access_token: $access_token";
   }
   catch (Exception $e) {
-    print 'Error: '. $e->getMessage();
+    print $e->getMessage();
   }
 }
