@@ -247,7 +247,13 @@ class OAuth2Client {
     $result = drupal_http_request($token_endpoint, $options);
 
     if ($result->code != 200) {
-      throw new Exception(t('Failed to get an access token of grant_type !grant_type.', array('!grant_type' => $data['grant_type'])));
+      throw new Exception(
+        t("Failed to get an access token of grant_type !grant_type.\nError: !result_error",
+          array(
+            '!grant_type' => $data['grant_type'],
+            '!result_error' => $result->error,
+          ))
+      );
     }
 
     return (Array) json_decode($result->data);
