@@ -165,9 +165,58 @@ class OAuth2Client {
    * Get an access_token using the server-side (authorization code) flow.
    *
    * This is done in two steps:
-   *   - First, a redirection is done to the authorization
+   *   - First, a redirection is done to the authentication
    *     endpoint, in order to request an authorization code.
    *   - Second, using this code, an access_token is requested.
+   *
+   * There are lots of redirects in this case and this part is the most
+   * tricky and difficult to understand of the oauth2_client, so let
+   * me try to explain how it is done.
+   *
+   * Suppose that in the controller of the path 'test/xyz'
+   * we try to get an access_token:
+   *     $client = oauth2_client_load('server-side-test');
+   *     $access_token = $client->getAccessToken();
+   * or:
+   *     $client = new OAuth2Client(array(
+   *         'token_endpoint' => 'https://oauth2_server/oauth2/token',
+   *         'client_id' => 'client1',
+   *         'client_secret' => 'secret1',
+   *         'auth_flow' => 'server-side',
+   *         'authorization_endpoint' => 'https://oauth2_server/oauth2/authorize',
+   *         'redirect_uri' => 'https://oauth2_client/oauth2/authorized',
+   *       ));
+   *     $access_token = $client->getAccessToken();
+   *
+   * From getAccessToken() we come to this function, getTokenServerSide(),
+   * and since there is no $_GET['code'], we redirect to the authentication
+   * url, but first we save the current path in the session:
+   *     $_SESSION['oauth2_client_destination'] = 'test/xyz';
+   *
+   * Once the authentication and authorization is done on the server,
+   * we are redirected by the server to the redirect uri:
+   * 'oauth2/authorized'.  In the controller of this path we find out
+   * that $_SESSION['oauth2_client_destination'] exists, and we
+   * redirect to the saved path, 'test/xyz', passing along the query
+   * parameters sent by the server (which include 'code', 'state', and
+   * maybe other parameters as well.)
+   *
+   * Now the code: $access_token = $client->getAccessToken(); is
+   * called again and we come back for a second time to the function
+   * getTokenServerSide(). However this time we do have a
+   * $_GET['code'], so we get a token from the server and return it.
+   *
+   * Inside the function getAccessToken() we save the returned token
+   * in session and then, since the session variable 'oauth2_client_destination'
+   * exists, we delete it and make another redirect to 'test/xyz'.
+   * This third redirect is in order to have in browser the original url,
+   * because from the last redirect we have something like this:
+   * 'test/xyz?code=8557&state=3d7dh3&....'
+   *
+   * This time we come again for a third time to the code
+   *     $access_token = $client->getAccessToken();
+   * But this time we have a valid token already saved in session,
+   * so the $client can find and return it without having to redirect etc.
    */
   protected function getTokenServerSide() {
     if (!isset($_GET['code'])) {
