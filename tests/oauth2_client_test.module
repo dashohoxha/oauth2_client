@@ -36,6 +36,17 @@ function oauth2_client_test_oauth2_clients() {
     'scope' => 'scope1 scope2',
   ) + $common;
 
+  // For testing server-side flow with automatic authorization client..
+  $oauth2_clients['server-side-auto'] = array(
+    'token_endpoint' => url('oauth2/token', array('absolute' => TRUE)),
+    'client_id' => 'client2',
+    'client_secret' => 'secret2',
+    'auth_flow' => 'server-side',
+    'authorization_endpoint' => url('oauth2/authorize', array('absolute' => TRUE)),
+    'redirect_uri' => url('oauth2/authorized',  array('absolute' => TRUE)),
+    'scope' => 'scope1 scope2',
+  );
+
   // Test error handling.
 
   $oauth2_clients['wrong-client-id'] = array(
@@ -108,6 +119,16 @@ function oauth2_client_test_menu() {
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
   );
+  $items['oauth2/test-client-integration'] = array(
+    'page callback' => 'oauth2_client_test_client_integration',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+  $items['oauth2/test-authorized'] = array(
+    'page callback' => 'oauth2_client_test_authorized',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
   return $items;
 }
 
@@ -118,6 +139,7 @@ function oauth2_client_test_menu() {
  *   - $base_url/oauth2/test/client-credentials
  *   - $base_url/oauth2/test/user-password
  *   - $base_url/oauth2/test/server-side
+ *   - $base_url/oauth2/test/server-side-auto
  *   - $base_url/oauth2/test/wrong-client-id
  *   - $base_url/oauth2/test/wrong-client-secret
  *   - $base_url/oauth2/test/wrong-token-endpoint
@@ -138,4 +160,69 @@ function oauth2_client_test_callback($client_name) {
   catch (Exception $e) {
     print $e->getMessage();
   }
+}
+
+/**
+ * Use the client 'client2' for getting an authorization code.
+ * This is done with the help of the module oauth2_client,
+ * because 'client2' is registered for it (its return_uri belongs
+ * to oauth2_client).
+ * Before jumping to $authentication_uri, register an internal
+ * redirect with oauth2_client.
+ *
+ * Try it by opening in browser:
+ *   - $base_url/oauth2/test-client-integration
+ */
+function oauth2_client_test_client_integration() {
+  $state = drupal_get_token('test_client');
+  oauth2_client_set_redirect($state, array(
+      'uri' => 'oauth2/test-authorized',
+      'params' => array(
+        'extra_param' => 'This will be appended to the request on redirect.',
+      )
+    ));
+
+  $query_params = array(
+    'response_type' => 'code',
+    'client_id'     => 'client2',
+    'redirect_uri'  => oauth2_client_get_redirect_uri(),
+    'state' => $state,
+  );
+  $endpoint = url('oauth2/authorize', array('absolute' => TRUE));
+  $authentication_uri = $endpoint . '?' . http_build_query($query_params);
+  drupal_goto($authentication_uri);
+}
+
+/**
+ * The oauth2 server will redirect to the registered redirect_uri,
+ * which is handled by the oauth2_client, but then oauth2_client
+ * will redirect to the path 'oauth2/test/authorized', which comes
+ * here. This is because we registered a redirect on the oauth2_client
+ * before jumping to $authentication_uri. While redirecting, oauth2_client
+ * will also append to the request the 'extra_param'.
+ */
+function oauth2_client_test_authorized() {
+  if (!drupal_valid_token($_GET['state'], 'test_client')) {
+    print "The parameter 'state' is wrong.\n";
+    return;
+  }
+  $extra_param = $_GET['extra_param'];
+  print "extra_param: $extra_param <br/>\n";
+
+  $options = array(
+    'method' => 'POST',
+    'data' => http_build_query(array(
+              'grant_type' => 'authorization_code',
+              'code' => $_GET['code'],
+              'redirect_uri' => oauth2_client_get_redirect_uri(),
+            )),
+    'headers' => array(
+      'Content-Type' => 'application/x-www-form-urlencoded',
+      'Authorization' => 'Basic ' . base64_encode('client2:secret2'),
+    ),
+  );
+  $token_endpoint = url('oauth2/token', array('absolute' => TRUE));
+  $result = drupal_http_request($token_endpoint, $options);
+  $token = json_decode($result->data);
+  print 'access_token: ' . $token->access_token;
 }

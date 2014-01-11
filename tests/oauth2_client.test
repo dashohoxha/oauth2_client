@@ -27,6 +27,7 @@ class OAuth2ClientTestCase extends DrupalWebTestCase {
     $this->clientCredentialsFlow();
     $this->userPasswordFlow();
     $this->serverSideFlow();
+    $this->clientIntegration();
     $this->errorCases();
   }
 
@@ -73,10 +74,32 @@ class OAuth2ClientTestCase extends DrupalWebTestCase {
 
   /**
    * Test the server-side flow.
+   *
+   * For this test we are using 'client2' which has
+   * automatic authorization enabled.
    */
   public function serverSideFlow() {
-    $result = $this->drupalPost('oauth2/test/server-side', array(), 'Yes, I authorize this request.');
-    debug($result);
+    $user = (object) array('name' => 'user1', 'pass_raw' => 'pass1');
+    $this->drupalLogin($user);
+    $token1 = $this->getToken('server-side-auto');
+    $token2 = $this->getToken('server-side-auto');
+    $this->assertEqual($token1, $token2, 'The same cached token is used, while it has not expired yet.');
+
+    sleep(10);  // wait for the token to expire
+    $token3 = $this->getToken('server-side-auto');
+    $this->assertNotEqual($token1, $token3, 'Getting a new token from refresh_token.');
+
+    sleep(30);  // wait for the refresh_token to expire
+    $token4 = $this->getToken('server-side-auto');
+  }
+
+  /**
+   * Test client integration.
+   */
+  public function clientIntegration() {
+    $result = $this->drupalGet('oauth2/test-client-integration');
+    $this->assertText('access_token: ');
+    $this->assertText('extra_param: This will be appended to the request on redirect.');
   }
 
   /**
