@@ -103,7 +103,6 @@ class OAuth2Client {
     catch (Exception $e) {
       // Get a token.
       switch ($this->params['auth_flow']) {
-        default:
         case 'client-credentials':
           $token = $this->getToken(array(
                      'grant_type' => 'client_credentials',
@@ -122,6 +121,11 @@ class OAuth2Client {
 
         case 'server-side':
           $token = $this->getTokenServerSide();
+          break;
+
+        default:
+          throw new Exception(t('Unknown authorization flow "!auth_flow". Suported values for auth_flow are: client-credentials, user-password, server-side.',
+              array('!auth_flow' => $this->params['auth_flow'])));
           break;
       }
     }
