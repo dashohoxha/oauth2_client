@@ -83,7 +83,13 @@ class OAuth2Client {
    * get a new one from the authorization server.
    */
   public function getAccessToken() {
-    // Try to get an existing token.
+    // Check wheather the existing token has expired.
+    // We take the expiration time to be shorter by 10 sec
+    // in order to account for any delays during the request.
+    // Usually a token is valid for 1 hour, so making
+    // the expiration time shorter by 10 sec is insignificant.
+    // However it should be kept in mind during the tests,
+    // where the expiration time is much shorter.
     $expiration_time = $this->token['expiration_time'];
     if ($expiration_time > (time() + 10)) {
       // The existing token can still be used.
