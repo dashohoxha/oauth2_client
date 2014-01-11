@@ -37,7 +37,7 @@ function oauth2_client_load($name) {
   if (!isset($oauth2_clients[$name])) {
     throw new Exception("No client with name '$name' is defined.");
   }
-  $oauth2_client = new OAuth2Client($oauth2_clients[$name]);
+  $oauth2_client = new OAuth2Client($oauth2_clients[$name], $name);
   return $oauth2_client;
 }
 
@@ -157,18 +157,22 @@ function oauth2_client_redirect() {
  *     'expiration_time' => $hybridauth->api->access_token_expires_at,
  *     'scope' => $hybridauth->scope,
  *   );
- *   oauth2_client_set_token($client_id, $token);
+ *   $token_endpoint = $oauth2->api->token_endpoint;
+ *   $client_id = $oauth2->api->client_id;
+ *   $auth_flow = 'server-side';
+ *   $id = md5($token_endpoint . $client_id . $auth_flow);
+ *   oauth2_client_set_token($id, $token);
  */
-function oauth2_client_set_token($client_id, $token) {
-  $_SESSION['oauth2_token'][$client_id] = $token;
+function oauth2_client_set_token($id, $token) {
+  $_SESSION['oauth2_token'][$id] = $token;
 }
 
 /**
- * Returns the access token of the oauth2_client for the given $client_id.
+ * Returns the access token of the oauth2_client with the given $id.
  */
-function oauth2_client_get_token($client_id) {
-  if (isset($_SESSION['oauth2_token'][$client_id])) {
-    return $_SESSION['oauth2_token'][$client_id];
+function oauth2_client_get_token($id) {
+  if (isset($_SESSION['oauth2_token'][$id])) {
+    return $_SESSION['oauth2_token'][$id];
   }
   else {
     return array(

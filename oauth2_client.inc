@@ -18,6 +18,11 @@
  */
 class OAuth2Client {
   /**
+   * Unique identifier of an OAuth2Client object.
+   */
+  protected $id = NULL;
+
+  /**
    * Associative array of the parameters that are needed
    * by the different types of authorization flows.
    *  - auth_flow :: server-side | client-credentials | user-password
@@ -65,13 +70,19 @@ class OAuth2Client {
    *   Associative array of the parameters that are needed
    *   by the different types of authorization flows.
    */
-  public function __construct($params = NULL) {
+  public function __construct($params = NULL, $id = NULL) {
     if ($params) $this->params = $params + $this->params;
 
+    if (!$id) {
+      $id = md5($this->params['token_endpoint']
+            . $this->params['client_id']
+            . $this->params['auth_flow']);
+    }
+    $this->id = $id;
+
     // Get the token data from the session, if it is stored there.
-    $client_id = $params['client_id'];
-    if (isset($_SESSION['oauth2_token'][$client_id])) {
-      $this->token = $_SESSION['oauth2_token'][$client_id] + $this->token;
+    if (isset($_SESSION['oauth2_token'][$this->id])) {
+      $this->token = $_SESSION['oauth2_token'][$this->id] + $this->token;
     }
   }
 
@@ -133,8 +144,7 @@ class OAuth2Client {
 
     // Store the token (on session as well).
     $this->token = $token;
-    $client_id = $this->params['client_id'];
-    $_SESSION['oauth2_token'][$client_id] = $token;
+    $_SESSION['oauth2_token'][$this->id] = $token;
 
     // Redirect to the original path (if this is a redirection
     // from the server-side flow).
@@ -260,8 +270,7 @@ class OAuth2Client {
    * Check the 'state' parameter, to mittigate CSRF attacks.
    */
   protected function checkStateParameter() {
-    $client_id = $this->params['client_id'];
-    if (!drupal_valid_token($_GET['state'], $client_id)) {
+    if (!drupal_valid_token($_GET['state'], $this->id)) {
       throw new Exception(t('The state does not validate, the received token is not trustable.'));
     }
   }
@@ -274,7 +283,7 @@ class OAuth2Client {
       'response_type' => 'code',
       'client_id'     => $this->params['client_id'],
       'redirect_uri'  => $this->params['redirect_uri'],
-      'state' => drupal_get_token($this->params['client_id'])
+      'state' => drupal_get_token($this->id)
     );
     if ($this->params['scope']) {
       $query_params['scope'] = $this->params['scope'];
