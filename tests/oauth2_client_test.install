@@ -42,7 +42,8 @@ function _oauth2_client_test_create() {
       'password' => 'password',
     ),
     'always_issue_new_refresh_token' => TRUE,
-    'access_lifetime' => 15,
+    // For testing purposes, set short expire times.
+    'access_lifetime' => 20,
     'refresh_token_lifetime' => 30,
   );
   $server->save();
