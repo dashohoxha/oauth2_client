@@ -71,7 +71,7 @@ class OAuth2Client {
     // Get the token data from the session, if it is stored there.
     $client_id = $params['client_id'];
     if (isset($_SESSION['oauth2_token'][$client_id])) {
-      $this->token = $_SESSION['oauth2_token'][$client_id];
+      $this->token = $_SESSION['oauth2_token'][$client_id] + $this->token;
     }
   }
 
