@@ -126,7 +126,11 @@ function oauth2_client_set_redirect($state, $redirect) {
  *     'expiration_time' => $hybridauth->api->access_token_expires_at,
  *     'scope' => $hybridauth->scope,
  *   );
- *   oauth2_client_set_token($client_id, $token);
+ *   $token_endpoint = $oauth2->api->token_endpoint;
+ *   $client_id = $oauth2->api->client_id;
+ *   $auth_flow = 'server-side';
+ *   $id = md5($token_endpoint . $client_id . $auth_flow);
+ *   oauth2_client_set_token($id, $token);
  */
 function oauth2_client_set_token($client_id, $token) {
   $_SESSION['oauth2_token'][$client_id] = $token;
