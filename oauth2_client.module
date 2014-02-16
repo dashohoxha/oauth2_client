@@ -62,6 +62,13 @@ function oauth2_client_menu() {
  * 'code' and 'state').
  */
 function oauth2_client_authorized() {
+  // If there is any error in the server response, display it.
+  if (isset($_GET['error'])) {
+    $error = $_GET['error'];
+    $error_description = $_GET['error_description'];
+    drupal_set_message("Error: $error: $error_description", 'error');
+  }
+
   // Redirect the authorization reply to another oauth2 client,
   // if they have requested it.
   oauth2_client_redirect();
