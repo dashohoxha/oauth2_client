@@ -133,15 +133,15 @@ function oauth2_client_set_redirect($state, $redirect) {
  *   oauth2_client_set_token($id, $token);
  */
 function oauth2_client_set_token($client_id, $token) {
-  $_SESSION['oauth2_token'][$client_id] = $token;
+  $_SESSION['oauth2_client']['token'][$client_id] = $token;
 }
 
 /**
  * Returns the access token of the oauth2_client for the given $client_id.
  */
 function oauth2_client_get_token($client_id) {
-  if (isset($_SESSION['oauth2_token'][$client_id])) {
-    return $_SESSION['oauth2_token'][$client_id];
+  if (isset($_SESSION['oauth2_client']['token'][$client_id])) {
+    return $_SESSION['oauth2_client']['token'][$client_id];
   }
   else {
     return array(

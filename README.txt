@@ -91,8 +91,8 @@ time.
 
   In order to remember the part of the client application that
   initiated the authorization request, a session variable is used:
-  $_SESSION['oauth2_client_destination'].  Then, drupal_goto() is used
-  to jump again to that path of the application.
+  $_SESSION['oauth2_client']['destination'].  Then, drupal_goto() is
+  used to jump again to that path of the application.
 
 * Integrating with other oauth2 clients
 

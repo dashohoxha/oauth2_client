@@ -67,8 +67,8 @@ function oauth2_client_authorized() {
   oauth2_client_redirect();
 
   // Redirect if there is a destination.
-  if (isset($_SESSION['oauth2_client_destination'])) {
-    $destination = $_SESSION['oauth2_client_destination'];
+  if (isset($_SESSION['oauth2_client']['destination'])) {
+    $destination = $_SESSION['oauth2_client']['destination'];
     drupal_goto($destination, array('query' => $_REQUEST));
   }
 }
@@ -164,15 +164,15 @@ function oauth2_client_redirect() {
  *   oauth2_client_set_token($id, $token);
  */
 function oauth2_client_set_token($id, $token) {
-  $_SESSION['oauth2_token'][$id] = $token;
+  $_SESSION['oauth2_client']['token'][$id] = $token;
 }
 
 /**
  * Returns the access token of the oauth2_client with the given $id.
  */
 function oauth2_client_get_token($id) {
-  if (isset($_SESSION['oauth2_token'][$id])) {
-    return $_SESSION['oauth2_token'][$id];
+  if (isset($_SESSION['oauth2_client']['token'][$id])) {
+    return $_SESSION['oauth2_client']['token'][$id];
   }
   else {
     return array(

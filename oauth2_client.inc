@@ -83,8 +83,8 @@ class Client {
     $this->id = $id;
 
     // Get the token data from the session, if it is stored there.
-    if (isset($_SESSION['oauth2_token'][$this->id])) {
-      $this->token = $_SESSION['oauth2_token'][$this->id] + $this->token;
+    if (isset($_SESSION['oauth2_client']['token'][$this->id])) {
+      $this->token = $_SESSION['oauth2_client']['token'][$this->id] + $this->token;
     }
   }
 
@@ -146,7 +146,7 @@ class Client {
 
     // Store the token (on session as well).
     $this->token = $token;
-    $_SESSION['oauth2_token'][$this->id] = $token;
+    $_SESSION['oauth2_client']['token'][$this->id] = $token;
 
     // Redirect to the original path (if this is a redirection
     // from the server-side flow).
@@ -203,12 +203,12 @@ class Client {
    * From getAccessToken() we come to this function, getTokenServerSide(),
    * and since there is no $_GET['code'], we redirect to the authentication
    * url, but first we save the current path in the session:
-   *     $_SESSION['oauth2_client_destination'] = 'test/xyz';
+   *     $_SESSION['oauth2_client']['destination'] = 'test/xyz';
    *
    * Once the authentication and authorization is done on the server,
    * we are redirected by the server to the redirect uri:
    * 'oauth2/authorized'.  In the controller of this path we find out
-   * that $_SESSION['oauth2_client_destination'] exists, and we
+   * that $_SESSION['oauth2_client']['destination'] exists, and we
    * redirect to the saved path, 'test/xyz', passing along the query
    * parameters sent by the server (which include 'code', 'state', and
    * maybe other parameters as well.)
@@ -219,7 +219,7 @@ class Client {
    * $_GET['code'], so we get a token from the server and return it.
    *
    * Inside the function getAccessToken() we save the returned token
-   * in session and then, since the session variable 'oauth2_client_destination'
+   * in session and then, since $_SESSION['oauth2_client']['destination']
    * exists, we delete it and make another redirect to 'test/xyz'.
    * This third redirect is in order to have in browser the original url,
    * because from the last redirect we have something like this:
@@ -251,7 +251,7 @@ class Client {
   protected function saveDrupalDestination() {
     $destination = drupal_get_destination();
     $destination = $destination['destination'];
-    $_SESSION['oauth2_client_destination'] = $destination;
+    $_SESSION['oauth2_client']['destination'] = $destination;
   }
 
   /**
@@ -259,9 +259,9 @@ class Client {
    * from the server-side flow).
    */
   protected function redirectToOriginalPath() {
-    if (isset($_SESSION['oauth2_client_destination'])) {
-      $destination = $_SESSION['oauth2_client_destination'];
-      unset($_SESSION['oauth2_client_destination']);
+    if (isset($_SESSION['oauth2_client']['destination'])) {
+      $destination = $_SESSION['oauth2_client']['destination'];
+      unset($_SESSION['oauth2_client']['destination']);
       unset($_REQUEST['code']);
       unset($_REQUEST['state']);
       drupal_goto($destination, array('query' => $_REQUEST));
