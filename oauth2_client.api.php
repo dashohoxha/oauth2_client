@@ -53,8 +53,8 @@ function hook_oauth2_clients() {
  * @param string $name
  *   Name of the client.
  *
- * @return OAuth2Client
- *   Returns an OAuth2Client object
+ * @return OAuth2\Client
+ *   Returns an OAuth2\Client object
  *
  * Example:
  *   $test1 = oauth2_client_load('test1');

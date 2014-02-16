@@ -28,8 +28,8 @@ function oauth2_client_get_all() {
  * @param string $name
  *   Name of the client.
  *
- * @return OAuth2Client
- *   Returns an OAuth2Client object
+ * @return OAuth2\Client
+ *   Returns an OAuth2\Client object
  */
 function oauth2_client_load($name) {
   $oauth2_clients = oauth2_client_get_all();
@@ -37,7 +37,7 @@ function oauth2_client_load($name) {
   if (!isset($oauth2_clients[$name])) {
     throw new Exception("No client with name '$name' is defined.");
   }
-  $oauth2_client = new OAuth2Client($oauth2_clients[$name], $name);
+  $oauth2_client = new OAuth2\Client($oauth2_clients[$name], $name);
   return $oauth2_client;
 }
 

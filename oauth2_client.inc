@@ -1,11 +1,13 @@
 <?php
+namespace OAuth2;
+
 /**
  * @file
- * class OAuth2Client
+ * class OAuth2\Client
  */
 
 /**
- * The class OAuth2Client is used to get authorization from
+ * The class OAuth2\Client is used to get authorization from
  * an oauth2 server. Its only goal is to get an access_token
  * from the oauth2 server, so the only public function
  * (besides the constructor) is getAccessToken().
@@ -16,9 +18,9 @@
  * a client_secret, and a token_endpoint. There can be an optional
  * scope as well.
  */
-class OAuth2Client {
+class Client {
   /**
-   * Unique identifier of an OAuth2Client object.
+   * Unique identifier of an OAuth2\Client object.
    */
   protected $id = NULL;
 
@@ -64,7 +66,7 @@ class OAuth2Client {
   );
 
   /**
-   * Construct an OAuth2Client object.
+   * Construct an OAuth2\Client object.
    *
    * @param array $params
    *   Associative array of the parameters that are needed
@@ -111,7 +113,7 @@ class OAuth2Client {
       // Try to use refresh_token.
       $token = $this->getTokenRefreshToken();
     }
-    catch (Exception $e) {
+    catch (\Exception $e) {
       // Get a token.
       switch ($this->params['auth_flow']) {
         case 'client-credentials':
@@ -135,7 +137,7 @@ class OAuth2Client {
           break;
 
         default:
-          throw new Exception(t('Unknown authorization flow "!auth_flow". Suported values for auth_flow are: client-credentials, user-password, server-side.',
+          throw new \Exception(t('Unknown authorization flow "!auth_flow". Suported values for auth_flow are: client-credentials, user-password, server-side.',
               array('!auth_flow' => $this->params['auth_flow'])));
           break;
       }
@@ -163,7 +165,7 @@ class OAuth2Client {
    */
   protected function getTokenRefreshToken() {
     if (!$this->token['refresh_token']) {
-      throw new Exception(t('There is no refresh_token.'));
+      throw new \Exception(t('There is no refresh_token.'));
     }
     return $this->getToken(array(
         'grant_type' => 'refresh_token',
@@ -188,7 +190,7 @@ class OAuth2Client {
    *     $client = oauth2_client_load('server-side-test');
    *     $access_token = $client->getAccessToken();
    * or:
-   *     $client = new OAuth2Client(array(
+   *     $client = new OAuth2\Client(array(
    *         'token_endpoint' => 'https://oauth2_server/oauth2/token',
    *         'client_id' => 'client1',
    *         'client_secret' => 'secret1',
@@ -271,7 +273,7 @@ class OAuth2Client {
    */
   protected function checkStateParameter() {
     if (!drupal_valid_token($_GET['state'], $this->id)) {
-      throw new Exception(t('The state does not validate, the received token is not trustable.'));
+      throw new \Exception(t('The state does not validate, the received token is not trustable.'));
     }
   }
 
@@ -315,7 +317,7 @@ class OAuth2Client {
     $result = drupal_http_request($token_endpoint, $options);
 
     if ($result->code != 200) {
-      throw new Exception(
+      throw new \Exception(
         t("Failed to get an access token of grant_type !grant_type.\nError: !result_error",
           array(
             '!grant_type' => $data['grant_type'],
