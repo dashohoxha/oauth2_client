@@ -66,12 +66,12 @@ time.
 * How it works
 
   An access token and its related data are stored on the session
-  ($_SESSION['oauth2_token'][$client_id]), so that it can be reused
-  while it is not expired yet. The data that are stored for each token
-  are: access_token, expires_in, token_type, scope, refresh_token and
-  expiration_time. They are the values that come from the oauth2
-  server, except the last one, which is calculated as (REQUEST_TIME +
-  expires_in).
+  ($_SESSION['oauth2_client']['token'][$client_id]), so that it can be
+  reused while it is not expired yet. The data that are stored for
+  each token are: access_token, expires_in, token_type, scope,
+  refresh_token and expiration_time. They are the values that come
+  from the oauth2 server, except the last one, which is calculated as
+  (REQUEST_TIME + expires_in).
 
   When the token has expired (expiration_time > time() + 10), a new
   token is requested from the oauth2 server, using the refresh_token.
@@ -91,8 +91,8 @@ time.
 
   In order to remember the part of the client application that
   initiated the authorization request, a session variable is used:
-  $_SESSION['oauth2_client']['destination'].  Then, drupal_goto() is
-  used to jump again to that path of the application.
+  $_SESSION['oauth2_client']['redirect'][$state]['uri'].  Then,
+  drupal_goto() is used to jump again to that path of the application.
 
 * Integrating with other oauth2 clients
 

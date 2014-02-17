@@ -150,7 +150,7 @@ class Client {
 
     // Redirect to the original path (if this is a redirection
     // from the server-side flow).
-    $this->redirectToOriginalPath();
+    self::redirect();
 
     // Return the token.
     return $token['access_token'];
@@ -203,36 +203,34 @@ class Client {
    * From getAccessToken() we come to this function, getTokenServerSide(),
    * and since there is no $_GET['code'], we redirect to the authentication
    * url, but first we save the current path in the session:
-   *     $_SESSION['oauth2_client']['destination'] = 'test/xyz';
+   *   $_SESSION['oauth2_client']['redirect'][$state]['uri'] = 'test/xyz';
    *
-   * Once the authentication and authorization is done on the server,
-   * we are redirected by the server to the redirect uri:
-   * 'oauth2/authorized'.  In the controller of this path we find out
-   * that $_SESSION['oauth2_client']['destination'] exists, and we
-   * redirect to the saved path, 'test/xyz', passing along the query
-   * parameters sent by the server (which include 'code', 'state', and
-   * maybe other parameters as well.)
+   * Once the authentication and authorization is done on the server, we are
+   * redirected by the server to the redirect uri: 'oauth2/authorized'.  In
+   * the controller of this path we redirect to the saved path 'test/xyz'
+   * (since $_SESSION['oauth2_client']['redirect'][$state] exists), passing
+   * along the query parameters sent by the server (which include 'code',
+   * 'state', and maybe other parameters as well.)
    *
    * Now the code: $access_token = $client->getAccessToken(); is
    * called again and we come back for a second time to the function
    * getTokenServerSide(). However this time we do have a
    * $_GET['code'], so we get a token from the server and return it.
    *
-   * Inside the function getAccessToken() we save the returned token
-   * in session and then, since $_SESSION['oauth2_client']['destination']
-   * exists, we delete it and make another redirect to 'test/xyz'.
-   * This third redirect is in order to have in browser the original url,
-   * because from the last redirect we have something like this:
+   * Inside the function getAccessToken() we save the returned token in
+   * session and then, since $_SESSION['oauth2_client']['redirect'][$state]
+   * exists, we delete it and make another redirect to 'test/xyz'.  This third
+   * redirect is in order to have in browser the original url, because from
+   * the last redirect we have something like this:
    * 'test/xyz?code=8557&state=3d7dh3&....'
    *
-   * This time we come again for a third time to the code
+   * We come again for a third time to the code
    *     $access_token = $client->getAccessToken();
    * But this time we have a valid token already saved in session,
    * so the $client can find and return it without having to redirect etc.
    */
   protected function getTokenServerSide() {
     if (!isset($_GET['code'])) {
-      $this->saveDrupalDestination();
       drupal_goto($this->getAuthenticationUrl());
     }
     else {
@@ -246,25 +244,78 @@ class Client {
   }
 
   /**
-   * Save the destination to redirect after getting the token.
+   * Return the authentication url (used in case of the server-side flow).
    */
-  protected function saveDrupalDestination() {
-    $destination = drupal_get_destination();
-    $destination = $destination['destination'];
-    $_SESSION['oauth2_client']['destination'] = $destination;
+  //public function getAuthenticationUrl() {
+  protected function getAuthenticationUrl() {
+    $state = drupal_get_token($this->id);
+    $query_params = array(
+      'response_type' => 'code',
+      'client_id'     => $this->params['client_id'],
+      'redirect_uri'  => $this->params['redirect_uri'],
+      'state' => $state
+    );
+    if ($this->params['scope']) {
+      $query_params['scope'] = $this->params['scope'];
+    }
+    $endpoint = $this->params['authorization_endpoint'];
+    self::setRedirect($state);
+    return $endpoint . '?' . http_build_query($query_params);
   }
 
   /**
-   * Redirect to the original path (if this is a redirection
-   * from the server-side flow).
+   * Save the information needed for redirection after getting the token.
    */
-  protected function redirectToOriginalPath() {
-    if (isset($_SESSION['oauth2_client']['destination'])) {
-      $destination = $_SESSION['oauth2_client']['destination'];
-      unset($_SESSION['oauth2_client']['destination']);
-      unset($_REQUEST['code']);
-      unset($_REQUEST['state']);
-      drupal_goto($destination, array('query' => $_REQUEST));
+  public static function setRedirect($state, $redirect =NULL) {
+    if ($redirect == NULL) {
+      $destination = drupal_get_destination();
+      $destination = $destination['destination'];
+      $redirect = array(
+        'uri' => $destination,
+        'params' => array(),
+        'client' => 'oauth2_client',
+      );
+    }
+    if (!isset($redirect['client'])) {
+      $redirect['client'] = 'external';
+    }
+    $_SESSION['oauth2_client']['redirect'][$state] = $redirect;
+  }
+
+  /**
+   * Redirect to the original path.
+   *
+   * Redirects are registered with OAuth2\Client::setRedirect()
+   * The redirect contains the url to go to and the parameters
+   * to be sent to it.
+   */
+  public static function redirect($clean =TRUE) {
+    if (!isset($_REQUEST['state']))  return;
+    $state = $_REQUEST['state'];
+
+    if (!isset($_SESSION['oauth2_client']['redirect'][$state]))  return;
+    $redirect = $_SESSION['oauth2_client']['redirect'][$state];
+
+    if ($redirect['client'] != 'oauth2_client') {
+      // Clean the session from the redirect data.
+      //$_SESSION['oauth2_client']['redirect'][$state] = NULL;
+      unset($_SESSION['oauth2_client']['redirect'][$state]);
+      // Redirect.
+      drupal_goto($redirect['uri'],
+        array('query' => $redirect['params'] + $_REQUEST));
+    }
+    else {
+      // Clean the session from the redirect data
+      // and remove 'code' and 'state' from the request.
+      if ($clean) {
+        //$_SESSION['oauth2_client']['redirect'][$state] = NULL;
+        unset($_SESSION['oauth2_client']['redirect'][$state]);
+        unset($_REQUEST['code']);
+        unset($_REQUEST['state']);
+      }
+      // Redirect.
+      drupal_goto($redirect['uri'],
+        array('query' => $redirect['params'] + $_REQUEST));
     }
   }
 
@@ -275,23 +326,6 @@ class Client {
     if (!drupal_valid_token($_GET['state'], $this->id)) {
       throw new \Exception(t('The state does not validate, the received token is not trustable.'));
     }
-  }
-
-  /**
-   * Return the authentication url (used in case of the server-side flow).
-   */
-  public function getAuthenticationUrl() {
-    $query_params = array(
-      'response_type' => 'code',
-      'client_id'     => $this->params['client_id'],
-      'redirect_uri'  => $this->params['redirect_uri'],
-      'state' => drupal_get_token($this->id)
-    );
-    if ($this->params['scope']) {
-      $query_params['scope'] = $this->params['scope'];
-    }
-    $endpoint = $this->params['authorization_endpoint'];
-    return $endpoint . '?' . http_build_query($query_params);
   }
 
   /**

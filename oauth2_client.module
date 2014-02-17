@@ -4,6 +4,23 @@
  * Provides OAuth2 client functionality.
  */
 
+/*
+function oauth2_client_boot() {
+  function oauth2_client_log($var, $comment ='') {
+    $file = '/tmp/btr.log';
+    $content = "\n==> $comment: " . print_r($var, true);
+    file_put_contents($file, $content, FILE_APPEND);
+  }
+
+  oauth2_client_log('= = = = = = = = = = = = = = = = = = = = = = =');
+  oauth2_client_log($_GET, '$_GET');
+  oauth2_client_log($_POST, '$_POST');
+  if (isset($_SESSION['oauth2_client'])) {
+    oauth2_client_log($_SESSION['oauth2_client'], '$_SESSION[oauth2_client]');
+  }
+}
+*/
+
 /**
  * Gets all defined oauth2_clients.
  */
@@ -69,15 +86,9 @@ function oauth2_client_authorized() {
     drupal_set_message("Error: $error: $error_description", 'error');
   }
 
-  // Redirect the authorization reply to another oauth2 client,
-  // if they have requested it.
-  oauth2_client_redirect();
-
-  // Redirect if there is a destination.
-  if (isset($_SESSION['oauth2_client']['destination'])) {
-    $destination = $_SESSION['oauth2_client']['destination'];
-    drupal_goto($destination, array('query' => $_REQUEST));
-  }
+  // Redirect to the client that started the authentication.
+  module_load_include('inc', 'oauth2_client', 'oauth2_client');
+  OAuth2\Client::redirect($clean = FALSE);
 }
 
 /**
@@ -124,27 +135,8 @@ function oauth2_client_get_redirect_uri() {
  *     ));
  */
 function oauth2_client_set_redirect($state, $redirect) {
-  $_SESSION[$state] = $redirect;
-}
-
-/**
- * Redirect (forward) the authorization reply to another oauth2 client.
- *
- * The other oauth2 client should have requested this redirect
- * by calling the function oauth2_client_set_redirect() at the time
- * of making an authentication request.
- */
-function oauth2_client_redirect() {
-  if (!isset($_REQUEST['state']))  return;
-  $state = $_REQUEST['state'];
-
-  if (!isset($_SESSION[$state]))  return;
-  $redirect = $_SESSION[$state];
-  unset($_SESSION[$state]);
-
-  drupal_goto($redirect['uri'],
-    array('query' => $redirect['params'] + $_REQUEST)
-  );
+  module_load_include('inc', 'oauth2_client', 'oauth2_client');
+  OAuth2\Client::setRedirect($state, $redirect);
 }
 
 /**
