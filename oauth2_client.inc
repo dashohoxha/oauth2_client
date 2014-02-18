@@ -246,7 +246,6 @@ class Client {
   /**
    * Return the authentication url (used in case of the server-side flow).
    */
-  //public function getAuthenticationUrl() {
   protected function getAuthenticationUrl() {
     $state = drupal_get_token($this->id);
     $query_params = array(
@@ -297,23 +296,16 @@ class Client {
     $redirect = $_SESSION['oauth2_client']['redirect'][$state];
 
     if ($redirect['client'] != 'oauth2_client') {
-      // Clean the session from the redirect data.
-      //$_SESSION['oauth2_client']['redirect'][$state] = NULL;
       unset($_SESSION['oauth2_client']['redirect'][$state]);
-      // Redirect.
       drupal_goto($redirect['uri'],
         array('query' => $redirect['params'] + $_REQUEST));
     }
     else {
-      // Clean the session from the redirect data
-      // and remove 'code' and 'state' from the request.
       if ($clean) {
-        //$_SESSION['oauth2_client']['redirect'][$state] = NULL;
         unset($_SESSION['oauth2_client']['redirect'][$state]);
         unset($_REQUEST['code']);
         unset($_REQUEST['state']);
       }
-      // Redirect.
       drupal_goto($redirect['uri'],
         array('query' => $redirect['params'] + $_REQUEST));
     }
