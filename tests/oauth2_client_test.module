@@ -5,6 +5,26 @@
  */
 
 /**
+ * Implements hook_boot().
+ *
+ * Outputs debug information to the file: /tmp/btr.log
+ */
+function oauth2_client_test_boot() {
+  function _oauth2_client_test_log($var, $comment ='') {
+    $file = '/tmp/btr.log';
+    $content = "\n==> $comment: " . print_r($var, true);
+    file_put_contents($file, $content, FILE_APPEND);
+  }
+
+  _oauth2_client_test_log('= = = = = = = = = = = = = = = = = = = = = = =');
+  _oauth2_client_test_log($_GET, '$_GET');
+  _oauth2_client_test_log($_POST, '$_POST');
+  if (isset($_SESSION['oauth2_client'])) {
+    _oauth2_client_test_log($_SESSION['oauth2_client'], '$_SESSION[oauth2_client]');
+  }
+}
+
+/**
  * Implements hook_oauth2_clients().
  */
 function oauth2_client_test_oauth2_clients() {

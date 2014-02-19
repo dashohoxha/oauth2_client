@@ -4,23 +4,6 @@
  * Provides OAuth2 client functionality.
  */
 
-/*
-function oauth2_client_boot() {
-  function oauth2_client_log($var, $comment ='') {
-    $file = '/tmp/btr.log';
-    $content = "\n==> $comment: " . print_r($var, true);
-    file_put_contents($file, $content, FILE_APPEND);
-  }
-
-  oauth2_client_log('= = = = = = = = = = = = = = = = = = = = = = =');
-  oauth2_client_log($_GET, '$_GET');
-  oauth2_client_log($_POST, '$_POST');
-  if (isset($_SESSION['oauth2_client'])) {
-    oauth2_client_log($_SESSION['oauth2_client'], '$_SESSION[oauth2_client]');
-  }
-}
-*/
-
 /**
  * Gets all defined oauth2_clients.
  */
