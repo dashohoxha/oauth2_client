@@ -234,7 +234,6 @@ class Client {
       drupal_goto($this->getAuthenticationUrl());
     }
     else {
-      $this->checkStateParameter();
       return $this->getToken(array(
           'grant_type' => 'authorization_code',
           'code' => $_GET['code'],
@@ -247,7 +246,7 @@ class Client {
    * Return the authentication url (used in case of the server-side flow).
    */
   protected function getAuthenticationUrl() {
-    $state = drupal_get_token($this->id);
+    $state = md5(uniqid(rand(), TRUE));
     $query_params = array(
       'response_type' => 'code',
       'client_id'     => $this->params['client_id'],
@@ -308,15 +307,6 @@ class Client {
       }
       drupal_goto($redirect['uri'],
         array('query' => $redirect['params'] + $_REQUEST));
-    }
-  }
-
-  /**
-   * Check the 'state' parameter, to mittigate CSRF attacks.
-   */
-  protected function checkStateParameter() {
-    if (!drupal_valid_token($_GET['state'], $this->id)) {
-      throw new \Exception(t('The state does not validate, the received token is not trustable.'));
     }
   }
 
