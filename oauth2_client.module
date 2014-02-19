@@ -5,6 +5,11 @@
  */
 
 /**
+ * Get the class OAuth2\Client.
+ */
+include_once drupal_get_path('module', 'oauth2_client') . '/oauth2_client.inc';
+
+/**
  * Gets all defined oauth2_clients.
  */
 function oauth2_client_get_all() {
@@ -70,7 +75,6 @@ function oauth2_client_authorized() {
   }
 
   // Redirect to the client that started the authentication.
-  module_load_include('inc', 'oauth2_client', 'oauth2_client');
   OAuth2\Client::redirect($clean = FALSE);
 }
 
@@ -118,7 +122,6 @@ function oauth2_client_get_redirect_uri() {
  *     ));
  */
 function oauth2_client_set_redirect($state, $redirect) {
-  module_load_include('inc', 'oauth2_client', 'oauth2_client');
   OAuth2\Client::setRedirect($state, $redirect);
 }
 
