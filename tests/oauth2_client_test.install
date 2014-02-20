@@ -19,7 +19,7 @@ function oauth2_client_test_enable() {
  */
 function oauth2_client_test_disable() {
   _oauth2_client_test_delete();
-  _oauth2_client_test_revoke_permissions();
+  //_oauth2_client_test_revoke_permissions();
 }
 
 /**

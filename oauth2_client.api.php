@@ -106,7 +106,7 @@ function oauth2_client_get_redirect_uri() {
  *     ));
  */
 function oauth2_client_set_redirect($state, $redirect) {
-  $_SESSION[$state] = $redirect;
+  OAuth2\Client::setRedirect($state, $redirect);
 }
 
 /**
