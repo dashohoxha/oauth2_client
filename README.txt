@@ -63,6 +63,57 @@ time.
   from the oauth2_server, so that it can be used for accessing web
   services.
 
+
+* More about using it
+
+  Another form of usage is like this:
+  #+BEGIN_EXAMPLE
+    $oauth2_config = array(
+      'token_endpoint' => $server_url . '/oauth2/token',
+      'auth_flow' => 'user-password',
+      'client_id' => 'test1',
+      'client_secret' => '12345',
+      'username' => $username,
+      'password' => $password,
+    );
+    try {
+      $oauth2_client = new OAuth2\Client($oauth2_config);
+      $access_token = $oauth2_client->getAccessToken();
+    }
+    catch (Exception $e) {
+      drupal_set_message($e->getMessage(), 'error');
+    }
+  #+END_EXAMPLE
+
+* Custom usage
+
+  Sometimes (or rather often) oauth2 servers have special requirements
+  that are different from the OAuth2 standard and different from other
+  oauth2 implementations. This client cannot possibly cover all these
+  special requirements. In such a case, a possible solution can be to
+  extend the class *OAuth2\Client* like this:
+  #+BEGIN_EXAMPLE
+    <?php
+    namespace OAuth2;
+
+    class MyClient extends Client {
+      protected function getToken($data) {
+        // Implement the custom logic that is needed by the oauth2 server.
+      }
+    }
+  #+END_EXAMPLE
+
+  And then use it like this:
+  #+BEGIN_EXAMPLE
+    try {
+      $oauth2_client = new OAuth2\MyClient($oauth2_config);
+      $access_token = $oauth2_client->getAccessToken();
+    }
+    catch (Exception $e) {
+      drupal_set_message($e->getMessage(), 'error');
+    }
+  #+END_EXAMPLE
+
 * How it works
 
   An access token and its related data are stored on the session
