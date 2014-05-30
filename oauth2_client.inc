@@ -324,7 +324,7 @@ class Client {
 
     $options = array(
       'method' => 'POST',
-      'data' => http_build_query($data, '', '&'),
+      'data' => drupal_http_build_query($data),
       'headers' => array(
         'Content-Type' => 'application/x-www-form-urlencoded',
         'Authorization' => 'Basic ' . base64_encode("$client_id:$client_secret"),
