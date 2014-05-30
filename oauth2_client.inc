@@ -330,6 +330,10 @@ class Client {
         'Authorization' => 'Basic ' . base64_encode("$client_id:$client_secret"),
       ),
     );
+    // Allow other modules to alter the request before it is sent.
+    // For example if you need to set things like $context in the request
+    // options
+    drupal_alter('oauth2_get_token', $options);
     $result = drupal_http_request($token_endpoint, $options);
 
     if ($result->code != 200) {
