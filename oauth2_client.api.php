@@ -26,7 +26,7 @@ function hook_oauth2_clients() {
     'password' => 'pass1',
   );
 
-  // Uding client-credentials flow.
+  // Using client-credentials flow.
   $oauth2_clients['test2'] = array(
     'token_endpoint' => $server_url . '/oauth2/token',
     'auth_flow' => 'client-credentials',
