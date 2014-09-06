@@ -77,7 +77,7 @@ time.
       'password' => $password,
     );
     try {
-      $oauth2_client = new OAuth2\Client($oauth2_config);
+      $oauth2_client = new OAuth2\Client($oauth2_config, $client_id);
       $access_token = $oauth2_client->getAccessToken();
     }
     catch (Exception $e) {

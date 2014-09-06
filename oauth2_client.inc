@@ -71,6 +71,10 @@ class Client {
    * @param array $params
    *   Associative array of the parameters that are needed
    *   by the different types of authorization flows.
+   *
+   * @param string $id
+   *   ID of the client. If not given, it will be generated
+   *   from token_endpoint, client_id and auth_flow.
    */
   public function __construct($params = NULL, $id = NULL) {
     if ($params) $this->params = $params + $this->params;
