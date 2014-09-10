@@ -338,10 +338,10 @@ class Client {
 
     if ($result->code != 200) {
       throw new \Exception(
-        t("Failed to get an access token of grant_type !grant_type.\nError: !result_error",
+        t("Failed to get an access token of grant_type @grant_type.\nError: @result_error",
           array(
-            '!grant_type' => $data['grant_type'],
-            '!result_error' => $result->error,
+            '@grant_type' => $data['grant_type'],
+            '@result_error' => $result->error,
           ))
       );
     }
