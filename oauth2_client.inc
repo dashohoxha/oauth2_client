@@ -97,8 +97,16 @@ class Client {
    */
   public function clearToken() {
     if (isset($_SESSION['oauth2_client']['token'][$this->id])) {
-      unset($_SESSION['oauth2_client']['token'][$this->id]));
+      unset($_SESSION['oauth2_client']['token'][$this->id]);
     }
+    $this->token = array(
+      'access_token' => NULL,
+      'expires_in' => NULL,
+      'token_type' => NULL,
+      'scope' => NULL,
+      'refresh_token' => NULL,
+      'expiration_time' => NULL,
+    );
   }
 
   /**
