@@ -93,6 +93,15 @@ class Client {
   }
 
   /**
+   * Clear the token data from the session.
+   */
+  public function clearToken() {
+    if (isset($_SESSION['oauth2_client']['token'][$this->id])) {
+      unset($_SESSION['oauth2_client']['token'][$this->id]));
+    }
+  }
+
+  /**
    * Get and return an access token.
    *
    * If there is an existing token (stored in session),
