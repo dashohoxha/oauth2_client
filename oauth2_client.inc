@@ -318,7 +318,7 @@ class Client {
    * Get and return an access token for the grant_type given in $params.
    */
   protected function getToken($data) {
-    if (isset($data['scope']) and $data['scope'] == NULL) {
+    if (array_key_exists('scope', $data) and $data['scope'] === NULL) {
       unset($data['scope']);
     }
 
