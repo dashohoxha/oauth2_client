@@ -65,6 +65,9 @@ class Client {
     'expiration_time' => NULL,
   );
 
+  /** Return the token array. */
+  function token() { return $this->token; }
+
   /**
    * Construct an OAuth2\Client object.
    *
@@ -112,11 +115,15 @@ class Client {
   /**
    * Get and return an access token.
    *
-   * If there is an existing token (stored in session),
-   * return that one. But if the existing token is expired,
-   * get a new one from the authorization server.
+   * If there is an existing token (stored in session), return that one. But if
+   * the existing token is expired, get a new one from the authorization server.
+   *
+   * If the refresh_token has also expired and the auth_flow is 'server-side', a
+   * redirection to the oauth2 server will be made, in order to re-authenticate.
+   * However the redirection will be skipped if the parameter $redirect is
+   * FALSE, and NULL will be returned as access_token.
    */
-  public function getAccessToken() {
+  public function getAccessToken($redirect = TRUE) {
     // Check wheather the existing token has expired.
     // We take the expiration time to be shorter by 10 sec
     // in order to account for any delays during the request.
@@ -154,7 +161,13 @@ class Client {
           break;
 
         case 'server-side':
-          $token = $this->getTokenServerSide();
+          if ($redirect) {
+            $token = $this->getTokenServerSide();
+          }
+          else {
+            $this->clearToken();
+            return NULL;
+          }
           break;
 
         default:
