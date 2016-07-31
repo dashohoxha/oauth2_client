@@ -268,6 +268,14 @@ class Client {
       drupal_goto($this->getAuthenticationUrl());
     }
     else {
+      // Check the query parameter 'state'.
+      if ( !isset($_GET['state'])
+        || !isset($_SESSION['oauth2_client']['redirect'][$_GET['state']]) )
+      {
+        throw new \Exception(t("Wrong query parameter 'state'."));
+      }
+
+      // Get and return a token.
       return $this->getToken(array(
           'grant_type' => 'authorization_code',
           'code' => $_GET['code'],
