@@ -40,6 +40,7 @@ class Client {
    *  - scope :: requested scopes, separated by a space
    *  - username :: username of the resource owner
    *  - password :: password of the resource owner
+   *  - skip-ssl-verification :: Skip verification of the SSL connection (needed for testing).
    */
   protected $params = array(
     'auth_flow' => NULL,
@@ -51,6 +52,7 @@ class Client {
     'scope' => NULL,
     'username' => NULL,
     'password' => NULL,
+    'skip-ssl-verification' => FALSE,
   );
 
   /**
@@ -372,6 +374,13 @@ class Client {
         'Authorization' => 'Basic ' . base64_encode("$client_id:$client_secret"),
       ),
     );
+    if ($this->params['skip-ssl-verification']) {
+      $options['context'] = stream_context_create([
+                              'ssl' => [
+                                'verify_peer' => FALSE,
+                                'verify_peer_name' => FALSE,
+                              ]]);
+    }
     $result = drupal_http_request($token_endpoint, $options);
 
     if ($result->code != 200) {
