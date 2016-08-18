@@ -375,11 +375,12 @@ class Client {
       ),
     );
     if ($this->params['skip-ssl-verification']) {
-      $options['context'] = stream_context_create([
-                              'ssl' => [
-                                'verify_peer' => FALSE,
-                                'verify_peer_name' => FALSE,
-                              ]]);
+      $options['context'] = stream_context_create(array(
+        'ssl' => array(
+          'verify_peer' => FALSE,
+          'verify_peer_name' => FALSE,
+        )
+      ));
     }
     $result = drupal_http_request($token_endpoint, $options);
 
