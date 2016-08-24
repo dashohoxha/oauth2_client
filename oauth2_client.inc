@@ -267,7 +267,9 @@ class Client {
    */
   protected function getTokenServerSide() {
     if (!isset($_GET['code'])) {
-      drupal_goto($this->getAuthenticationUrl());
+      $url = $this->getAuthenticationUrl();
+      header('Location: ' . $url, TRUE, 302);
+      drupal_exit($url);
     }
     else {
       // Check the query parameter 'state'.
@@ -310,11 +312,9 @@ class Client {
    */
   public static function setRedirect($state, $redirect =NULL) {
     if ($redirect == NULL) {
-      $destination = drupal_get_destination();
-      $destination = drupal_parse_url($destination['destination']);
       $redirect = array(
-        'uri' => $destination['path'],
-        'params' => $destination['query'],
+        'uri' => $_GET['q'],
+        'params' => drupal_get_query_parameters(),
         'client' => 'oauth2_client',
       );
     }
@@ -337,6 +337,10 @@ class Client {
 
     if (!isset($_SESSION['oauth2_client']['redirect'][$state]))  return;
     $redirect = $_SESSION['oauth2_client']['redirect'][$state];
+
+    // We don't expect a 'destination' query argument comming from the oauth2 server.
+    // This would confuse and misguide the function drupal_goto() that is called below.
+    if (isset($_GET['destination']))  unset($_GET['destination']);
 
     if ($redirect['client'] != 'oauth2_client') {
       unset($_SESSION['oauth2_client']['redirect'][$state]);
