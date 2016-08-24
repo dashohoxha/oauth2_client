@@ -311,10 +311,10 @@ class Client {
   public static function setRedirect($state, $redirect =NULL) {
     if ($redirect == NULL) {
       $destination = drupal_get_destination();
-      $destination = $destination['destination'];
+      $destination = drupal_parse_url($destination['destination']);
       $redirect = array(
-        'uri' => $destination,
-        'params' => array(),
+        'uri' => $destination['path'],
+        'params' => $destination['query'],
         'client' => 'oauth2_client',
       );
     }
