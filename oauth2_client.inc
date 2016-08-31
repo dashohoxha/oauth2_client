@@ -344,6 +344,7 @@ class Client {
 
     if ($redirect['client'] != 'oauth2_client') {
       unset($_SESSION['oauth2_client']['redirect'][$state]);
+      unset($_REQUEST['q']);
       drupal_goto($redirect['uri'],
         array('query' => $redirect['params'] + $_REQUEST));
     }
@@ -353,6 +354,7 @@ class Client {
         unset($_REQUEST['code']);
         unset($_REQUEST['state']);
       }
+      unset($_REQUEST['q']);
       drupal_goto($redirect['uri'],
         array('query' => $redirect['params'] + $_REQUEST));
     }
