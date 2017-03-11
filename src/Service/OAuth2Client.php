@@ -189,18 +189,20 @@ class OAuth2Client implements OAuth2ClientInterface {
 
         default:
           throw new \Exception(t(
-            'Unknown authorization flow "!auth_flow". Supported values for auth_flow are: client-credentials, user-password, server-side.',
-            ['!auth_flow' => $this->params['auth_flow']]
+            'Unknown authorization flow "@auth_flow". Supported values for auth_flow are: client-credentials, user-password, server-side.',
+            ['@auth_flow' => $this->params['auth_flow']]
           ));
 
           break;
       }
     }
 
-    // Some providers do not return an 'expires_in' value, so we
-    // set a default of an hour. If the token expires dies within that time,
-    // the system will request a new token automatically.
-    $token['expiration_time'] = isset($token['expires_in']) ? REQUEST_TIME + $token['expires_in'] : REQUEST_TIME + 3600;
+    if(isset($token['access_token'])) {
+      // Some providers do not return an 'expires_in' value, so we
+      // set a default of an hour. If the token expires dies within that time,
+      // the system will request a new token automatically.
+      $token['expiration_time'] = isset($token['expires_in']) ? REQUEST_TIME + $token['expires_in'] : REQUEST_TIME + 3600;
+    }
 
     // Store the token (on session as well).
     $this->token = $token;
