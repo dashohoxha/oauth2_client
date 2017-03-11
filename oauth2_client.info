@@ -1,6 +1,0 @@
-name = OAuth2 Client
-description = Provides OAuth2 client functionality.
-package = "OAuth2"
-core = 7.x
-
-files[] = oauth2_client.inc

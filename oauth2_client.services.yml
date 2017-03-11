@@ -1,0 +1,9 @@
+parameters:
+  oauth2_client.service.class: 'Drupal\oauth2_client\Service\OAuth2Client'
+
+services:
+  oauth2.client:
+    class: '%oauth2_client.service.class%'
+    arguments:
+      - '@http_client'
+      - '@request_stack'

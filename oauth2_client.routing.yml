@@ -1,0 +1,7 @@
+oauth2.redirect_url:
+  path: '/oauth2/authorized'
+  defaults:
+    _controller: 'Drupal\oauth2_client\Controller\OAuth2ClientController::redirectUrlPage'
+    _title: 'OAuth2 Redirect URL page'
+  requirements:
+    _user_is_logged_in: 'TRUE'

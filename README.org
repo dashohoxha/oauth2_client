@@ -77,7 +77,8 @@ time.
       'password' => $password,
     );
     try {
-      $oauth2_client = new OAuth2\Client($oauth2_config, $client_id);
+      $oauth2_client = \Drupal::service('oauth2.client');
+      $oauth2_client->init($oauth2_config, $client_id);
       $access_token = $oauth2_client->getAccessToken();
     }
     catch (Exception $e) {
@@ -91,32 +92,12 @@ time.
   Sometimes (or rather often) oauth2 servers have special requirements
   that are different from the OAuth2 standard and different from other
   oauth2 implementations. This client cannot possibly cover all these
-  special requirements. In such a case, a possible solution can be to
-  extend the class *OAuth2\Client* like this:
-  #+BEGIN_EXAMPLE
-    <?php
-    namespace OAuth2;
+  special requirements. In such a case, you can extend
+  Drupal\oauth2_client\Service\OAuth2Client, then swap out the oauth2.service
+  provided by this module, using the technique described here:
+  https://www.previousnext.com.au/blog/overriding-services-drupal-8-advanced-cases
 
-    class MyClient extends Client {
-      protected function getToken($data) {
-        // Implement the custom logic that is needed by the oauth2 server.
-      }
-    }
-  #+END_EXAMPLE
-
-  And then use it like this:
-  #+BEGIN_EXAMPLE
-    try {
-      $oauth2_client = new OAuth2\MyClient($oauth2_config);
-      $access_token = $oauth2_client->getAccessToken();
-    }
-    catch (Exception $e) {
-      drupal_set_message($e->getMessage(), 'error');
-    }
-  #+END_EXAMPLE
-
-
-* How it works
+* How the module works
 
   An access token and its related data are stored on the session
   ($_SESSION['oauth2_client']['token'][$client_id]), so that it can be
@@ -185,7 +166,7 @@ time.
     - uri: the uri of the oauth2 client that is requesting a
       redirect
     - params: associative array of other parameters that should be
-      appended to the uri, along with the $_REQUEST comming from the
+      appended to the uri, along with the $_REQUEST coming from the
       server
 
   Once another oauth2 client that has been successfully authenticated

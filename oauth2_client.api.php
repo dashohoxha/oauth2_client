@@ -1,7 +1,7 @@
 <?php
 /**
  * @file
- * The programing interface provided by the module oauth2_client.
+ * Documentation of API functions provided by the oauth2_client module
  */
 
 /**
@@ -60,14 +60,12 @@ function hook_oauth2_clients() {
  *   $test1 = oauth2_client_load('test1');
  *   $access_token = $test1->getAccessToken();
  */
-function oauth2_client_load($name);
+function oauth2_client_load($name) {}
 
 /**
  * Return the redirect_uri of oauth2_client.
  */
-function oauth2_client_get_redirect_uri() {
-  return url('oauth2/authorized', array('absolute' => TRUE));
-}
+function oauth2_client_get_redirect_uri() {}
 
 /**
  * Set a redirect request.
@@ -105,9 +103,7 @@ function oauth2_client_get_redirect_uri() {
  *       )
  *     ));
  */
-function oauth2_client_set_redirect($state, $redirect) {
-  OAuth2\Client::setRedirect($state, $redirect);
-}
+function oauth2_client_set_redirect($state, $redirect) {}
 
 /**
  * Share an access token with oauth2_client.
@@ -132,24 +128,9 @@ function oauth2_client_set_redirect($state, $redirect) {
  *   $id = md5($token_endpoint . $client_id . $auth_flow);
  *   oauth2_client_set_token($id, $token);
  */
-function oauth2_client_set_token($client_id, $token) {
-  $_SESSION['oauth2_client']['token'][$client_id] = $token;
-}
+function oauth2_client_set_token($client_id, $token) {}
 
 /**
  * Returns the access token of the oauth2_client for the given $client_id.
  */
-function oauth2_client_get_token($client_id) {
-  if (isset($_SESSION['oauth2_client']['token'][$client_id])) {
-    return $_SESSION['oauth2_client']['token'][$client_id];
-  }
-  else {
-    return array(
-      'access_token' => NULL,
-      'refresh_token' => NULL,
-      'expires_in' => NULL,
-      'expiration_time' => NULL,
-      'scope' => NULL,
-    );
-  }
-}
+function oauth2_client_get_token($client_id) {}

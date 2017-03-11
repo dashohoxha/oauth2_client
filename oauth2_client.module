@@ -4,17 +4,15 @@
  * Provides OAuth2 client functionality.
  */
 
-/**
- * Get the class OAuth2\Client.
- */
-include_once drupal_get_path('module', 'oauth2_client') . '/oauth2_client.inc';
+use Drupal\oauth2_client\Service\OAuth2Client;
 
 /**
  * Gets all defined oauth2_clients.
  */
 function oauth2_client_get_all() {
   $data = array();
-  foreach (module_implements('oauth2_clients') as $module) {
+  $module_handler = \Drupal::moduleHandler();
+  foreach ($module_handler->getImplementations('oauth2_clients') as $module) {
     $result = call_user_func($module . '_oauth2_clients');
     if (isset($result) && is_array($result)) {
       foreach ($result as $name => $item) {
@@ -23,7 +21,9 @@ function oauth2_client_get_all() {
       }
     }
   }
-  drupal_alter('oauth2_clients', $data);
+  
+  \Drupal::moduleHandler()->alter('oauth2_clients', $data);
+
   return $data;
 }
 
@@ -33,56 +33,27 @@ function oauth2_client_get_all() {
  * @param string $name
  *   Name of the client.
  *
- * @return OAuth2\Client
- *   Returns an OAuth2\Client object
+ * @return OAuth2Client
+ *   Returns an OAuth2Client object
  */
 function oauth2_client_load($name) {
   $oauth2_clients = oauth2_client_get_all();
 
   if (!isset($oauth2_clients[$name])) {
-    throw new Exception("No client with name '$name' is defined.");
+    throw new Exception(t('The client %name has not been defined.', ['%name' => $name]));
   }
-  $oauth2_client = new OAuth2\Client($oauth2_clients[$name], $name);
+
+  $oauth2_client = \Drupal::service('oauth2.client');
+  $oauth2_client->init($oauth2_clients[$name], $name);
+
   return $oauth2_client;
-}
-
-/**
- * Implements hook_menu().
- */
-function oauth2_client_menu() {
-  $items = array();
-  $items['oauth2/authorized'] = array(
-    'page callback' => 'oauth2_client_authorized',
-    'access callback' => TRUE,
-    'type' => MENU_CALLBACK,
-  );
-  return $items;
-}
-
-/**
- * Callback for path oauth2/authorized.
- *
- * An authorized request in server-side flow
- * will be redirected here (having variables
- * 'code' and 'state').
- */
-function oauth2_client_authorized() {
-  // If there is any error in the server response, display it.
-  if (isset($_GET['error'])) {
-    $error = $_GET['error'];
-    $error_description = $_GET['error_description'];
-    drupal_set_message("Error: $error: $error_description", 'error');
-  }
-
-  // Redirect to the client that started the authentication.
-  OAuth2\Client::redirect($clean = FALSE);
 }
 
 /**
  * Return the redirect_uri of oauth2_client.
  */
 function oauth2_client_get_redirect_uri() {
-  return url('oauth2/authorized', array('absolute' => TRUE));
+  return Url::fromRoute('oauth2.redirect_url', [], ['absolute' => TRUE])->toString();
 }
 
 /**
@@ -122,7 +93,7 @@ function oauth2_client_get_redirect_uri() {
  *     ));
  */
 function oauth2_client_set_redirect($state, $redirect) {
-  OAuth2\Client::setRedirect($state, $redirect);
+  OAuth2Client::setRedirect($state, $redirect);
 }
 
 /**
