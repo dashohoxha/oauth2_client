@@ -112,7 +112,7 @@ class OAuth2Client implements OAuth2ClientInterface {
     $this->id = $id;
 
     // Get the token data from the tempstore, if it is stored there.
-    $tempstore = \Drupal::service('user.tempstore')->get('oauth2_client');
+    $tempstore = \Drupal::service('user.private_tempstore')->get('oauth2_client');
     $redirects = $tempstore->get('token');
     if (isset($tokens[$this->id])) {
       $this->token = $tokens[$this->id] + $this->token;
@@ -123,7 +123,7 @@ class OAuth2Client implements OAuth2ClientInterface {
    * {@inheritdoc}.
    */
   public function clearToken() {
-    $tempstore = \Drupal::service('user.tempstore')->get('oauth2_client');
+    $tempstore = \Drupal::service('user.private_tempstore')->get('oauth2_client');
     $tokens = $tempstore->get('token');
 
     if (isset($tokens[$this->id])) {
@@ -213,7 +213,7 @@ class OAuth2Client implements OAuth2ClientInterface {
     // Store the token (on session as well).
     $this->token = $token;
 
-    $tempstore = \Drupal::service('user.tempstore')->get('oauth2_client');
+    $tempstore = \Drupal::service('user.private_tempstore')->get('oauth2_client');
     $tokens = $tempstore->get('token');
     $tokens[$this->id] = $token;
     $tempstore->set('token', $tokens);
@@ -241,7 +241,7 @@ class OAuth2Client implements OAuth2ClientInterface {
       $redirect['client'] = 'external';
     }
 
-    $tempstore = \Drupal::service('user.tempstore')->get('oauth2_client');
+    $tempstore = \Drupal::service('user.private_tempstore')->get('oauth2_client');
     $redirects = $tempstore->get('redirect');
     $redirets[$state] = $redirect;
     $tempstore->set('redirect', $redirects);
@@ -256,7 +256,7 @@ class OAuth2Client implements OAuth2ClientInterface {
 	}
     $state = \Drupal::service('request_stack')->getCurrentRequest()->get('state');
 
-    $tempstore = \Drupal::service('user.tempstore')->get('oauth2_client');
+    $tempstore = \Drupal::service('user.private_tempstore')->get('oauth2_client');
     $redirects = $tempstore->get('redirect');
     if (!isset($redirects[$state])) {
       return;
@@ -379,7 +379,7 @@ class OAuth2Client implements OAuth2ClientInterface {
     else {
       // Check the query parameter 'state'.
       $state = $this->requestStack->getCurrentRequest()->get('state');
-      $tempstore = \Drupal::service('user.tempstore')->get('oauth2_client');
+      $tempstore = \Drupal::service('user.private_tempstore')->get('oauth2_client');
       $tokens = $tempstore->get('token');
       if (!$state || !isset($tokens[$state])) {
         throw new \Exception(t("'State query parameter does not match"));
