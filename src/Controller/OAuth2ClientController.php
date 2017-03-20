@@ -50,6 +50,9 @@ class OAuth2ClientController extends ControllerBase implements OAuth2ClientContr
 
     // Redirect to the client that started the authentication.
     OAuth2Client::redirect($clean = FALSE);
+    return [
+	    '#markup' => 'Redirect failed',
+    ];
   }
 
   /**
