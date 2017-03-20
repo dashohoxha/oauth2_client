@@ -264,7 +264,7 @@ class OAuth2Client implements OAuth2ClientInterface {
 	}
     $state = \Drupal::service('request_stack')->getCurrentRequest()->get('state');
 
-	$tempstore = \Drupal::service('user.private_tempstore')->get('oauth2_client');
+    $tempstore = \Drupal::service('user.private_tempstore')->get('oauth2_client');
     $redirects = $tempstore->get('redirect');
     if (!isset($redirects[$state])) {
       return;
