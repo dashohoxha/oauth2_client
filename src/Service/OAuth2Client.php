@@ -212,13 +212,6 @@ class OAuth2Client implements OAuth2ClientInterface {
       }
     }
 
-    if(isset($token['access_token'])) {
-      // Some providers do not return an 'expires_in' value, so we
-      // set a default of an hour. If the token expires dies within that time,
-      // the system will request a new token automatically.
-      $token['expiration_time'] = isset($token['expires_in']) ? REQUEST_TIME + $token['expires_in'] : REQUEST_TIME + 3600;
-    }
-
     // Store the token (on session as well).
     $this->token = $token;
 
@@ -467,6 +460,15 @@ class OAuth2Client implements OAuth2ClientInterface {
  
     $serializer = new Serializer(array(new GetSetMethodNormalizer()), array('json' => new JsonEncoder()));
 
-    return $serializer->decode($response_data, 'json');
+    $token =  $serializer->decode($response_data, 'json');
+
+    if(!isset($token['expiration_time'])) {
+      // Some providers do not return an 'expires_in' value, so we
+      // set a default of an hour. If the token expires dies within that time,
+      // the system will request a new token automatically.
+      $token['expiration_time'] = REQUEST_TIME + 3600;
+    }
+
+    return $token;
   }
 }
