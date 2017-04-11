@@ -400,6 +400,12 @@ class Client {
       );
     }
 
-    return (Array) json_decode($result->data);
+    $token = (Array) json_decode($result->data);
+
+    if (!isset($token['expires_in'])) {
+      $token['expires_in'] = 3600;
+    }
+
+    return $token;
   }
 }
