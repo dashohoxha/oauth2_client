@@ -59,13 +59,13 @@ class Client {
    * Associated array that keeps data about the access token.
    */
   protected $token = array(
-    'access_token' => NULL,
-    'expires_in' => NULL,
-    'token_type' => NULL,
-    'scope' => NULL,
-    'refresh_token' => NULL,
-    'expiration_time' => NULL,
-  );
+      'access_token' => NULL,
+      'expires_in' => NULL,
+      'token_type' => NULL,
+      'scope' => NULL,
+      'refresh_token' => NULL,
+      'expiration_time' => NULL,
+    );
 
   /** Return the token array. */
   function token() { return $this->token; }
@@ -91,20 +91,53 @@ class Client {
     }
     $this->id = $id;
 
-    // Get the token data from the session, if it is stored there.
-    if (isset($_SESSION['oauth2_client']['token'][$this->id])) {
-      $this->token = $_SESSION['oauth2_client']['token'][$this->id] + $this->token;
+    // Get the token data from the storage, if exists.
+    $this->token = static::loadToken($this->id);
+  }
+
+  /**
+   * Clear the token data.
+   */
+  public function clearToken() {
+    static::discardToken($this->id);
+    $this->token = static::loadToken($this->id);
+  }
+
+  /**
+   * Store the token data.
+   *
+   * @param $key
+   *   The token identifier.
+   * @param array $token
+   *   The token data to store.
+   */
+  public static function storeToken($key, array $token) {
+    $_SESSION['oauth2_client']['token'][$key] = $token;
+  }
+
+  /**
+   * Load the token data from the storage.
+   *
+   * @param $key
+   *   The token identifier.
+   * @return array
+   *   The token data stored for the given key,
+   *   or an empty token if such a key does not exist.
+   */
+  public static function loadToken($key) {
+    if (isset($_SESSION['oauth2_client']['token'][$key])) {
+      return $_SESSION['oauth2_client']['token'][$key];
+    }
+    else {
+      return static::emptyToken();
     }
   }
 
   /**
-   * Clear the token data from the session.
+   * Return an empty token.
    */
-  public function clearToken() {
-    if (isset($_SESSION['oauth2_client']['token'][$this->id])) {
-      unset($_SESSION['oauth2_client']['token'][$this->id]);
-    }
-    $this->token = array(
+  protected static function emptyToken() {
+    return array(
       'access_token' => NULL,
       'expires_in' => NULL,
       'token_type' => NULL,
@@ -112,6 +145,18 @@ class Client {
       'refresh_token' => NULL,
       'expiration_time' => NULL,
     );
+  }
+
+  /**
+   * Remove token from storage.
+   *
+   * @param $key
+   *   The token identifier.
+   */
+  protected static function discardToken($key) {
+    if (isset($_SESSION['oauth2_client']['token'][$key])) {
+      unset($_SESSION['oauth2_client']['token'][$key]);
+    }
   }
 
   /**
@@ -182,11 +227,11 @@ class Client {
 
     // Store the token (on session as well).
     $this->token = $token;
-    $_SESSION['oauth2_client']['token'][$this->id] = $token;
+    static::storeToken($this->id, $token);
 
     // Redirect to the original path (if this is a redirection
     // from the server-side flow).
-    self::redirect();
+    static::redirect();
 
     // Return the token.
     return $token['access_token'];
@@ -303,7 +348,7 @@ class Client {
       $query_params['scope'] = $this->params['scope'];
     }
     $endpoint = $this->params['authorization_endpoint'];
-    self::setRedirect($state);
+    static::setRedirect($state);
     return $endpoint . '?' . http_build_query($query_params);
   }
 
