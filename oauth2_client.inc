@@ -257,7 +257,7 @@ class Client {
    * refresh_token in it).
    */
   protected function getTokenRefreshToken() {
-    if (!$this->token['refresh_token']) {
+    if (empty($this->token['refresh_token'])) {
       throw new \Exception(t('There is no refresh_token.'));
     }
     return $this->getToken(array(
