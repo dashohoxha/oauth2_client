@@ -60,7 +60,9 @@ function hook_oauth2_clients() {
  *   $test1 = oauth2_client_load('test1');
  *   $access_token = $test1->getAccessToken();
  */
-function oauth2_client_load($name);
+function oauth2_client_load($name) {
+  //Returns an OAuth2\Client object
+}
 
 /**
  * Return the redirect_uri of oauth2_client.
