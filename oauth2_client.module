@@ -4,6 +4,7 @@
  * Provides OAuth2 client functionality.
  */
 
+use Drupal\Core\Url;
 use Drupal\oauth2_client\Service\OAuth2Client;
 
 /**
