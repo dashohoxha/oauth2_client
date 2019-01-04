@@ -45,7 +45,7 @@ class OAuth2ClientController extends ControllerBase implements OAuth2ClientContr
       $error_description = $this->currentRouteMatch->getParameter('error_description');
       $message = $this->t('Error: @error: @error_description', ['@error' => $error, '@error_description' => $error_description]);
 
-      $this->setMessage($message);
+      $this->messenger()->addError($message);
     }
 
     // Redirect to the client that started the authentication.
@@ -55,15 +55,4 @@ class OAuth2ClientController extends ControllerBase implements OAuth2ClientContr
     ];
   }
 
-  /**
-   * Calls to drupal_set_message() are added in a protected function that
-   * can be overridden when writing automated tests, to prevent failure from
-   * calling global functions.
-   *
-   * @param \Drupal\Core\StringTranslation\TranslatableMarkup $message
-   *   The translated message, created through the use of the t() function
-   */
-  protected function setMessage($message) {
-    drupal_set_message($message);
-  }
 }
