@@ -1,0 +1,132 @@
+<?php
+
+/**
+ * @file
+ * Testing OAuth2 client functionality.
+ */
+
+use Drupal\Core\Url;
+
+/**
+ * Implements hook_boot().
+ *
+ * Outputs debug information to the file: "/tmp/btr.log".
+ */
+function oauth2_client_test_boot() {
+  function _oauth2_client_test_log($var, $comment = '') {
+    $file = '/tmp/btr.log';
+    $content = "\n==> $comment: " . print_r($var, TRUE);
+    file_put_contents($file, $content, FILE_APPEND);
+  }
+
+  _oauth2_client_test_log('= = = = = = = = = = = = = = = = = = = = = = =');
+  _oauth2_client_test_log($_GET, '$_GET');
+  _oauth2_client_test_log($_POST, '$_POST');
+  if (isset($_SESSION['oauth2_client'])) {
+    _oauth2_client_test_log($_SESSION['oauth2_client'], '$_SESSION[oauth2_client]');
+  }
+}
+
+/**
+ * Implements hook_oauth2_clients().
+ */
+function oauth2_client_test_oauth2_clients() {
+  $oauth2_clients = [];
+
+  $common = [
+    'token_endpoint' => Url::fromUserInput('oauth2/token', ['absolute' => TRUE])->toString(),
+    'client_id' => 'client1',
+    'client_secret' => 'secret1',
+  ];
+
+  // For testing client-credentials flow.
+  $oauth2_clients['client-credentials'] = [
+    'auth_flow' => 'client-credentials',
+  ] + $common;
+
+  // For testing user-password flow.
+  $oauth2_clients['user-password'] = [
+    'auth_flow' => 'user-password',
+    'username' => 'user1',
+    'password' => 'pass1',
+  ] + $common;
+
+  // For testing server-side flow.
+  $oauth2_clients['server-side'] = [
+    'auth_flow' => 'server-side',
+    'authorization_endpoint' => Url::fromUserInput('oauth2/authorize', ['absolute' => TRUE])->toString(),
+    'redirect_uri' => Url::fromUserInput('oauth2/authorized', ['absolute' => TRUE])->toString(),
+    'scope' => 'scope1 scope2',
+  ] + $common;
+
+  // For testing server-side flow with automatic authorization client..
+  $oauth2_clients['server-side-auto'] = [
+    'token_endpoint' => Url::fromUserInput('oauth2/token', ['absolute' => TRUE])->toString(),
+    'client_id' => 'client2',
+    'client_secret' => 'secret2',
+    'auth_flow' => 'server-side',
+    'authorization_endpoint' => Url::fromUserInput('oauth2/authorize', ['absolute' => TRUE])->toString(),
+    'redirect_uri' => Url::fromUserInput('oauth2/authorized', ['absolute' => TRUE])->toString(),
+    'scope' => 'scope1 scope2',
+  ];
+
+  // Test error handling.
+  $oauth2_clients['wrong-client-id'] = [
+    'token_endpoint' => Url::fromUserInput('oauth2/token', ['absolute' => TRUE])->toString(),
+    'client_id' => 'client_1',
+    'client_secret' => 'secret1',
+    'auth_flow' => 'client-credentials',
+  ];
+
+  $oauth2_clients['wrong-client-secret'] = [
+    'token_endpoint' => Url::fromUserInput('oauth2/token', ['absolute' => TRUE])->toString(),
+    'client_id' => 'client1',
+    'client_secret' => 'secret_1',
+    'auth_flow' => 'client-credentials',
+  ];
+
+  $oauth2_clients['wrong-token-endpoint'] = [
+    'token_endpoint' => Url::fromUserInput('oauth2/token_1', ['absolute' => TRUE])->toString(),
+    'client_id' => 'client1',
+    'client_secret' => 'secret1',
+    'auth_flow' => 'client-credentials',
+  ];
+
+  $oauth2_clients['wrong-auth-flow'] = [
+    'auth_flow' => 'client-credentials-1',
+  ] + $common;
+
+  $oauth2_clients['wrong-username'] = [
+    'auth_flow' => 'user-password',
+    'username' => 'user_1',
+    'password' => 'pass1',
+  ] + $common;
+
+  $oauth2_clients['wrong-password'] = [
+    'auth_flow' => 'user-password',
+    'username' => 'user1',
+    'password' => 'pass_1',
+  ] + $common;
+
+  $oauth2_clients['wrong-scope'] = [
+    'token_endpoint' => Url::fromUserInput('oauth2/token', ['absolute' => TRUE])->toString(),
+    'client_id' => 'client1',
+    'client_secret' => 'secret1',
+    'auth_flow' => 'client-credentials',
+    'scope' => 'scope1 scope2 scope3',
+  ] + $common;
+
+  $oauth2_clients['wrong-authorization-endpoint'] = [
+    'auth_flow' => 'server-side',
+    'authorization_endpoint' => Url::fromUserInput('oauth2/authorize_1', ['absolute' => TRUE])->toString(),
+    'redirect_uri' => Url::fromUserInput('oauth2/authorized', ['absolute' => TRUE])->toString(),
+  ] + $common;
+
+  $oauth2_clients['wrong-redirect-uri'] = [
+    'auth_flow' => 'server-side',
+    'authorization_endpoint' => Url::fromUserInput('oauth2/authorize', ['absolute' => TRUE])->toString(),
+    'redirect_uri' => Url::fromUserInput('oauth2/authorized_1', ['absolute' => TRUE])->toString(),
+  ] + $common;
+
+  return $oauth2_clients;
+}

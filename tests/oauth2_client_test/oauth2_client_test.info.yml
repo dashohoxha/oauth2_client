@@ -1,0 +1,7 @@
+name: OAuth2 Client Test
+description: Testing OAuth2 client functionality.
+package: OAuth2
+core: 8.x
+dependencies:
+  - oauth2_client:oauth2_client
+  - oauth2_client:oauth2_client

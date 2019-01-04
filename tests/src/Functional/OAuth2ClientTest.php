@@ -1,15 +1,25 @@
 <?php
 
-/**
- * @file
- * OAuth2 Client tests.
- */
+namespace Drupal\Tests\oauth2_client\Functional;
+
+use Drupal\Tests\BrowserTestBase;
+use Drupal\user\Entity\User;
 
 /**
  * Test OAuth2 Client.
+ *
+ * @group oauth2_client
  */
-class OAuth2ClientTestCase extends DrupalWebTestCase {
-  protected $profile = 'testing';
+class OAuth2ClientTest extends BrowserTestBase {
+
+  protected $modules = ['oauth2_client_test', 'libraries'];
+
+  /**
+   * User storage instance.
+   *
+   * @var \Drupal\user\UserStorageInterface
+   */
+  protected $userStorage;
 
   public static function getInfo() {
     return array(
@@ -20,7 +30,8 @@ class OAuth2ClientTestCase extends DrupalWebTestCase {
   }
 
   public function setUp() {
-    parent::setUp(array('oauth2_client_test', 'libraries'));
+    parent::setUp();
+    $this->userStorage = \Drupal::entityTypeManager()->getStorage('user');
   }
 
   public function testGetAccessToken() {
@@ -36,10 +47,10 @@ class OAuth2ClientTestCase extends DrupalWebTestCase {
    */
   protected function getToken($client) {
     $result = $this->drupalGet('oauth2/test/' . $client);
-    $this->assertPattern('/^access_token: /', $result);
+    $this->assertSession()->responseMatches('/^access_token: /');
     $token = str_replace('access_token: ', '', $result);
     $token = trim($token);
-    $this->assertNotEqual($token, '',  'Token is not empty.');
+    $this->assertNotEquals('', $token, 'Token is not empty.');
     return $token;
   }
 
@@ -49,11 +60,12 @@ class OAuth2ClientTestCase extends DrupalWebTestCase {
   public function clientCredentialsFlow() {
     $token1 = $this->getToken('client-credentials');
     $token2 = $this->getToken('client-credentials');
-    $this->assertEqual($token1, $token2, 'The same cached token is used, while it has not expired yet.');
+    $this->assertEquals($token2, $token1, 'The same cached token is used, while it has not expired yet.');
 
-    sleep(10);  // wait for the token to expire
+    // Wait for the token to expire.
+    sleep(10);
     $token3 = $this->getToken('client-credentials');
-    $this->assertNotEqual($token1, $token3, 'Getting a new token, client-credential flow has no refresh token.');
+    $this->assertNotEquals($token3, $token1, 'Getting a new token, client-credential flow has no refresh token.');
   }
 
   /**
@@ -62,13 +74,15 @@ class OAuth2ClientTestCase extends DrupalWebTestCase {
   public function userPasswordFlow() {
     $token1 = $this->getToken('user-password');
     $token2 = $this->getToken('user-password');
-    $this->assertEqual($token1, $token2, 'The same cached token is used, while it has not expired yet.');
+    $this->assertEquals($token2, $token1, 'The same cached token is used, while it has not expired yet.');
 
-    sleep(10);  // wait for the token to expire
+    // Wait for the token to expire.
+    sleep(10);
     $token3 = $this->getToken('user-password');
-    $this->assertNotEqual($token1, $token3, 'Getting a new token from refresh_token.');
+    $this->assertNotEquals($token3, $token1, 'Getting a new token from refresh_token.');
 
-    sleep(30);  // wait for the refresh_token to expire
+    // Wait for the refresh_token to expire.
+    sleep(30);
     $token4 = $this->getToken('user-password');
   }
 
@@ -79,17 +93,20 @@ class OAuth2ClientTestCase extends DrupalWebTestCase {
    * automatic authorization enabled.
    */
   public function serverSideFlow() {
-    $user = (object) array('name' => 'user1', 'pass_raw' => 'pass1');
+    $users = $this->userStorage->loadByProperties(['name' => 'user1']);
+    $user = reset($users);
     $this->drupalLogin($user);
     $token1 = $this->getToken('server-side-auto');
     $token2 = $this->getToken('server-side-auto');
-    $this->assertEqual($token1, $token2, 'The same cached token is used, while it has not expired yet.');
+    $this->assertEquals($token2, $token1, 'The same cached token is used, while it has not expired yet.');
 
-    sleep(10);  // wait for the token to expire
+    // Wait for the token to expire.
+    sleep(10);
     $token3 = $this->getToken('server-side-auto');
-    $this->assertNotEqual($token1, $token3, 'Getting a new token from refresh_token.');
+    $this->assertNotEquals($token3, $token1, 'Getting a new token from refresh_token.');
 
-    sleep(30);  // wait for the refresh_token to expire
+    // Wait for the refresh_token to expire.
+    sleep(30);
     $token4 = $this->getToken('server-side-auto');
   }
 
@@ -126,4 +143,5 @@ class OAuth2ClientTestCase extends DrupalWebTestCase {
     // wrong-authorization-endpoint
     // wrong-redirect-uri
   }
+
 }

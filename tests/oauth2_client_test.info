@@ -1,7 +1,0 @@
-name = OAuth2 Client Test
-description = Testing OAuth2 client functionality.
-package = "OAuth2"
-core = 7.x
-
-dependencies[] = oauth2_client
-dependencies[] = oauth2_server

@@ -1,0 +1,20 @@
+oauth2_client_test.callback:
+  path: '/oauth2/test'
+    defaults:
+      _controller: 'Drupal\oauth2_client_test\Controller\TestController::callback'
+    requirements:
+      _access: TRUE
+
+oauth2_client_test.client_integration:
+  path: '/oauth2/test-client-integration'
+    defaults:
+      _controller: 'Drupal\oauth2_client_test\Controller\TestController::clientIntegration'
+    requirements:
+      _access: TRUE
+
+oauth2_client_test.authorized:
+  path: '/oauth2/test-authorized'
+    defaults:
+      _controller: 'Drupal\oauth2_client_test\Controller\TestController::authorized'
+    requirements:
+      _access: TRUE

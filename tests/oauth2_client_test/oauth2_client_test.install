@@ -1,0 +1,97 @@
+<?php
+
+/**
+ * @file
+ * Enable and disable hook functions.
+ */
+
+use Drupal\Core\Session\AccountInterface;
+use Drupal\Core\Url;
+
+/**
+ * Implements hook_enable().
+ */
+function oauth2_client_test_enable() {
+  _oauth2_client_test_create();
+  _oauth2_client_test_grant_permissions();
+}
+
+/**
+ * Create a test server, along with test clients and scopes.
+ */
+function _oauth2_client_test_create() {
+  $serverStorage = \Drupal::entityTypeManager()->getStorage('oauth2_server');
+  // Create the server and client.
+  $server = $serverStorage->create();
+  $server->name = 'test_oauth2_server';
+  $server->label = 'Test';
+  $server->settings = [
+    'default_scope' => 'scope1',
+    'enforce_state' => TRUE,
+    'allow_implicit' => TRUE,
+    'require_exact_redirect_uri' => FALSE,
+    'grant_types' => [
+      'authorization_code' => 'authorization_code',
+      'client_credentials' => 'client_credentials',
+      'refresh_token' => 'refresh_token',
+      'password' => 'password',
+    ],
+    'always_issue_new_refresh_token' => TRUE,
+    // For testing purposes, set short expire times.
+    'access_lifetime' => 20,
+    'refresh_token_lifetime' => 30,
+  ];
+  $server->save();
+
+  $serverClientStorage = \Drupal::entityTypeManager()->getStorage('oauth2_server_client');
+  // Add a client.
+  $client = $serverClientStorage->create();
+  $client->server = $server->name;
+  $client->label = 'Client 1';
+  $client->client_key = 'client1';
+  $client->client_secret = 'secret1';
+  $client->redirect_uri = Url::fromUserInput('oauth2/authorized', ['absolute' => TRUE])->toString();
+  $client->automatic_authorization = FALSE;
+  $client->save();
+
+  // The second client has automatic_authorization TRUE.
+  $client = $serverClientStorage->create();
+  $client->server = $server->name;
+  $client->label = 'Client 2';
+  $client->client_key = 'client2';
+  $client->client_secret = 'secret2';
+  $client->redirect_uri = Url::fromUserInput('oauth2/authorized', ['absolute' => TRUE])->toString();
+  $client->automatic_authorization = TRUE;
+  $client->save();
+
+  // Creates some scopes.
+  $scopes = [
+    'scope1' => 'Scope 1',
+    'scope2' => 'Scope 2',
+  ];
+  $serverScopeStorage = \Drupal::entityTypeManager()->getStorage('oauth2_server_scope');
+  foreach ($scopes as $scope_name => $scope_label) {
+    $scope = $serverScopeStorage->create();
+    $scope->server = $server->name;
+    $scope->name = $scope_name;
+    $scope->description = $scope_label;
+    $scope->save();
+  }
+
+  // Create a test user.
+  \Drupal::entityTypeManager()
+    ->getStorage('user')
+    ->create([
+      'name' => 'user1',
+      'pass' => 'pass1',
+      'status' => 1,
+    ])
+    ->save();
+}
+
+function _oauth2_client_test_grant_permissions() {
+  // Make sure that users have the permission to use the oauth2 server.
+  foreach ([AccountInterface::ANONYMOUS_ROLE, AccountInterface::AUTHENTICATED_ROLE] as $role_name) {
+    user_role_grant_permissions($role_name, ['use oauth2 server']);
+  }
+}
