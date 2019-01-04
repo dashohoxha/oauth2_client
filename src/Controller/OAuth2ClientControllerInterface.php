@@ -2,6 +2,11 @@
 
 namespace Drupal\oauth2_client\Controller;
 
+/**
+ * Interface OAuth2ClientControllerInterface.
+ *
+ * @package Drupal\oauth2_client\Controller
+ */
 interface OAuth2ClientControllerInterface {
 
   /**
@@ -12,4 +17,5 @@ interface OAuth2ClientControllerInterface {
    * 'code' and 'state').
    */
   public function redirectUrlPage();
+
 }

@@ -7,20 +7,25 @@ use Drupal\Core\Routing\ResettableStackedRouteMatchInterface;
 use Drupal\oauth2_client\Service\OAuth2Client;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
+/**
+ * Class OAuth2ClientController.
+ *
+ * @package Drupal\oauth2_client\Controller
+ */
 class OAuth2ClientController extends ControllerBase implements OAuth2ClientControllerInterface {
 
   /**
-   * The Current Route Match
+   * The Current Route Match.
    *
    * @var \Drupal\Core\Routing\ResettableStackedRouteMatchInterface
    */
   protected $currentRouteMatch;
 
   /**
-   * Create an OAuth2ClientController object
+   * Create an OAuth2ClientController object.
    *
    * @param \Drupal\Core\Routing\ResettableStackedRouteMatchInterface $currentRouteMatch
-   *   The Current Route Match
+   *   The Current Route Match.
    */
   public function __construct(ResettableStackedRouteMatchInterface $currentRouteMatch) {
     $this->currentRouteMatch = $currentRouteMatch;
@@ -51,7 +56,7 @@ class OAuth2ClientController extends ControllerBase implements OAuth2ClientContr
     // Redirect to the client that started the authentication.
     OAuth2Client::redirect(FALSE);
     return [
-	    '#markup' => 'Redirect failed',
+      '#markup' => 'Redirect failed',
     ];
   }
 
