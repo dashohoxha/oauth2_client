@@ -123,7 +123,7 @@ function oauth2_client_set_token($id, $token) {
   $tempstore = \Drupal::service('user.private_tempstore')->get('oauth2_client');
   $tokens = $tempstore->get('token');
   $tokens[$id] = $token;
-  $tempstore->set($token, $tokens);
+  $tempstore->set('token', $tokens);
 }
 
 /**
