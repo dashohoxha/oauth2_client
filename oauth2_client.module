@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * Provides OAuth2 client functionality.
@@ -11,18 +12,18 @@ use Drupal\oauth2_client\Service\OAuth2Client;
  * Gets all defined oauth2_clients.
  */
 function oauth2_client_get_all() {
-  $data = array();
+  $data = [];
   $module_handler = \Drupal::moduleHandler();
   foreach ($module_handler->getImplementations('oauth2_clients') as $module) {
     $result = call_user_func($module . '_oauth2_clients');
     if (isset($result) && is_array($result)) {
       foreach ($result as $name => $item) {
-        $item += array('module' => $module);
+        $item += ['module' => $module];
         $data[$name] = $item;
       }
     }
   }
-  
+
   \Drupal::moduleHandler()->alter('oauth2_clients', $data);
 
   return $data;
@@ -34,8 +35,10 @@ function oauth2_client_get_all() {
  * @param string $name
  *   Name of the client.
  *
- * @return OAuth2Client
+ * @return \Drupal\oauth2_client\Service\OAuth2Client
  *   Returns an OAuth2Client object
+ *
+ * @throws \Exception
  */
 function oauth2_client_load($name) {
   $oauth2_clients = oauth2_client_get_all();
@@ -54,7 +57,8 @@ function oauth2_client_load($name) {
  * Return the redirect_uri of oauth2_client.
  */
 function oauth2_client_get_redirect_uri() {
-  return Url::fromRoute('oauth2.redirect_url', [], ['absolute' => TRUE])->toString();
+  return Url::fromRoute('oauth2.redirect_url', [], ['absolute' => TRUE])
+    ->toString();
 }
 
 /**
@@ -71,18 +75,8 @@ function oauth2_client_get_redirect_uri() {
  * to set a redirect request with this function, and then
  * oauth2_client will forward the reply to it.
  *
- * @param string $state
- *   The random parameter that is used on the authentication url
- *   in order to mittigate CSRF attacks. In this case it is used
- *   as a key for identifying the authentication request.
- *
- * @param array $redirect
- *  Associative array that contains the keys:
- *   - 'uri': the uri of the oauth2 client that is requesting a redirect
- *   - 'params': associative array of other parameters that should be
- *     appended to the uri, along with the $_REQUEST
- *
  * Example:
+ * ```
  *   $state = md5(uniqid(rand(), TRUE));
  *   $hybridauth_config['state'] = $state;
  *   $hybridauth_config['redirect_uri'] = oauth2_client_get_redirect_uri();
@@ -92,8 +86,19 @@ function oauth2_client_get_redirect_uri() {
  *         'hauth.done' => 'DrupalOAuth2',
  *       )
  *     ));
+ * ```
+ *
+ * @param string $state
+ *   The random parameter that is used on the authentication url
+ *   in order to mittigate CSRF attacks. In this case it is used
+ *   as a key for identifying the authentication request.
+ * @param array $redirect
+ *   Associative array that contains the keys:
+ *   - 'uri': the uri of the oauth2 client that is requesting a redirect
+ *   - 'params': associative array of other parameters that should be
+ *     appended to the uri, along with the $_REQUEST.
  */
-function oauth2_client_set_redirect($state, $redirect) {
+function oauth2_client_set_redirect($state, array $redirect) {
   OAuth2Client::setRedirect($state, $redirect);
 }
 
@@ -137,12 +142,12 @@ function oauth2_client_get_token($id) {
     return $tokens[$id];
   }
   else {
-    return array(
+    return [
       'access_token' => NULL,
       'refresh_token' => NULL,
       'expires_in' => NULL,
       'expiration_time' => NULL,
       'scope' => NULL,
-    );
+    ];
   }
 }

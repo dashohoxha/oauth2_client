@@ -1,13 +1,14 @@
 <?php
+
 /**
  * @file
- * Documentation of API functions provided by the oauth2_client module
+ * Documentation of API functions provided by the oauth2_client module.
  */
 
 /**
  * Define oauth2 clients.
  *
- * @return Array
+ * @return array
  *   Associative array of oauth2 clients.
  */
 function hook_oauth2_clients() {
@@ -50,15 +51,17 @@ function hook_oauth2_clients() {
 /**
  * Load an oauth2 client.
  *
+ * Example:
+ * ```
+ *   $test1 = oauth2_client_load('test1');
+ *   $access_token = $test1->getAccessToken();
+ * ```
+ *
  * @param string $name
  *   Name of the client.
  *
- * @return OAuth2\Client
- *   Returns an OAuth2\Client object
- *
- * Example:
- *   $test1 = oauth2_client_load('test1');
- *   $access_token = $test1->getAccessToken();
+ * @return \Drupal\oauth2_client\Service\OAuth2Client
+ *   Returns an OAuth2Client object
  */
 function oauth2_client_load($name) {}
 
@@ -81,29 +84,31 @@ function oauth2_client_get_redirect_uri() {}
  * to set a redirect request with this function, and then
  * oauth2_client will forward the reply to it.
  *
+ * Example:
+ * ```
+ *   $state = md5(uniqid(rand(), TRUE));
+ *   $hybridauth_config['state'] = $state;
+ *   $hybridauth_config['redirect_uri'] = oauth2_client_get_redirect_uri();
+ *   oauth2_client_set_redirect($state, [
+ *       'uri' => 'hybridauth/endpoint',
+ *       'params' => [
+ *         'hauth.done' => 'DrupalOAuth2',
+ *       ]
+ *     ]
+ *   );
+ * ```
+ *
  * @param string $state
  *   The random parameter that is used on the authentication url
  *   in order to mittigate CSRF attacks. In this case it is used
  *   as a key for identifying the authentication request.
- *
  * @param array $redirect
- *  Associative array that contains the keys:
+ *   Associative array that contains the keys:
  *   - 'uri': the uri of the oauth2 client that is requesting a redirect
  *   - 'params': associative array of other parameters that should be
- *     appended to the uri, along with the $_REQUEST
- *
- * Example:
- *   $state = md5(uniqid(rand(), TRUE));
- *   $hybridauth_config['state'] = $state;
- *   $hybridauth_config['redirect_uri'] = oauth2_client_get_redirect_uri();
- *   oauth2_client_set_redirect($state, array(
- *       'uri' => 'hybridauth/endpoint',
- *       'params' => array(
- *         'hauth.done' => 'DrupalOAuth2',
- *       )
- *     ));
+ *     appended to the uri, along with the $_REQUEST.
  */
-function oauth2_client_set_redirect($state, $redirect) {}
+function oauth2_client_set_redirect($state, array $redirect) {}
 
 /**
  * Share an access token with oauth2_client.
