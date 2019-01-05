@@ -121,7 +121,7 @@ function oauth2_client_set_redirect($state, $redirect) {
  *   oauth2_client_set_token($id, $token);
  */
 function oauth2_client_set_token($id, $token) {
-  $tempstore = \Drupal::service('user.private_tempstore')->get('oauth2_client');
+  $tempstore = \Drupal::service('tempstore.private')->get('oauth2_client');
   $tokens = $tempstore->get('token');
   $tokens[$id] = $token;
   $tempstore->set('token', $tokens);
@@ -131,7 +131,7 @@ function oauth2_client_set_token($id, $token) {
  * Returns the access token of the oauth2_client with the given $id.
  */
 function oauth2_client_get_token($id) {
-  $tempstore = \Drupal::service('user.private_tempstore')->get('oauth2_client');
+  $tempstore = \Drupal::service('tempstore.private')->get('oauth2_client');
   $tokens = $tempstore->get('token');
   if (isset($tokens[$id])) {
     return $tokens[$id];

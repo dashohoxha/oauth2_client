@@ -2,7 +2,7 @@
 namespace Drupal\oauth2_client\Service;
 
 use Drupal\Core\Url;
-use Drupal\user\PrivateTempStoreFactory;
+use Drupal\Core\TempStore\PrivateTempStoreFactory;
 use GuzzleHttp\ClientInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -242,7 +242,7 @@ class OAuth2Client implements OAuth2ClientInterface {
       $redirect['client'] = 'external';
     }
 
-	$tempstore = \Drupal::service('user.private_tempstore')->get('oauth2_client');
+	$tempstore = \Drupal::service('tempstore.private')->get('oauth2_client');
     $redirects = $tempstore->get('redirect');
     $redirects[$state] = $redirect;
     $tempstore->set('redirect', $redirects);
@@ -257,7 +257,7 @@ class OAuth2Client implements OAuth2ClientInterface {
 	}
     $state = \Drupal::service('request_stack')->getCurrentRequest()->get('state');
 
-    $tempstore = \Drupal::service('user.private_tempstore')->get('oauth2_client');
+    $tempstore = \Drupal::service('tempstore.private')->get('oauth2_client');
     $redirects = $tempstore->get('redirect');
     if (!isset($redirects[$state])) {
       return;
