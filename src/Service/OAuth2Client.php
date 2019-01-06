@@ -1,6 +1,8 @@
 <?php
+
 namespace Drupal\oauth2_client\Service;
 
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Url;
 use Drupal\Core\TempStore\PrivateTempStoreFactory;
 use GuzzleHttp\ClientInterface;
@@ -11,6 +13,8 @@ use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Normalizer\GetSetMethodNormalizer;
 
 /**
+ * OAuth2Client service.
+ *
  * The class OAuth2Client is used to get authorization from
  * an OAuth2 server.
  *
@@ -22,12 +26,18 @@ use Symfony\Component\Serializer\Normalizer\GetSetMethodNormalizer;
  */
 class OAuth2Client implements OAuth2ClientInterface {
 
+  use StringTranslationTrait;
+
   /**
    * Unique identifier of an OAuth2Client object.
+   *
+   * @var string|null
    */
   protected $id = NULL;
 
   /**
+   * Parameters.
+   *
    * Associative array of the parameters that are needed
    * by the different types of authorization flows.
    *  - auth_flow :: server-side | client-credentials | user-password
@@ -43,7 +53,10 @@ class OAuth2Client implements OAuth2ClientInterface {
    *  - scope :: requested scopes, separated by a space
    *  - username :: username of the resource owner
    *  - password :: password of the resource owner
-   *  - skip-ssl-verification :: Skip verification of the SSL connection (needed for testing).
+   *  - skip-ssl-verification :: Skip verification of the SSL connection
+   *  (needed for testing).
+   *
+   * @var array
    */
   protected $params = [
     'auth_flow' => NULL,
@@ -60,6 +73,8 @@ class OAuth2Client implements OAuth2ClientInterface {
 
   /**
    * Associated array that keeps data about the access token.
+   *
+   * @var array
    */
   protected $token = [
     'access_token' => NULL,
@@ -71,35 +86,35 @@ class OAuth2Client implements OAuth2ClientInterface {
   ];
 
   /**
-   * The HTTP Request client
+   * The HTTP Request client.
    *
    * @var \GuzzleHttp\ClientInterface
    */
   protected $httpClient;
 
   /**
-   * The Request Stack
+   * The Request Stack.
    *
    * @var \Symfony\Component\HttpFoundation\RequestStack
    */
   protected $requestStack;
 
   /**
-   * The oauth2 client tempstore - acts like $_SESSION
+   * The oauth2 client tempstore - acts like $_SESSION.
    *
    * @var \Drupal\user\PrivateTempStore
    */
-   protected $tempstore;
+  protected $tempstore;
 
   /**
    * Construct an OAuth2Client object.
    *
    * @param \GuzzleHttp\ClientInterface $httpClient
-   *   The HTTP Request client
+   *   The HTTP Request client.
    * @param \Symfony\Component\HttpFoundation\RequestStack $requestStack
-   *   The Request Stack
-   * @param \Drupal\user\PrivateTempStoreFactory $tempstore
-   *   The user private tempstore - acts like $_SESSION
+   *   The Request Stack.
+   * @param \Drupal\Core\TempStore\PrivateTempStoreFactory $tempstore
+   *   The user private tempstore - acts like $_SESSION.
    */
   public function __construct(ClientInterface $httpClient, RequestStack $requestStack, PrivateTempStoreFactory $tempstore) {
     $this->httpClient = $httpClient;
@@ -130,7 +145,7 @@ class OAuth2Client implements OAuth2ClientInterface {
   }
 
   /**
-   * {@inheritdoc}.
+   * {@inheritdoc}
    */
   public function clearToken() {
     $tokens = $this->tempstore->get('token');
@@ -152,6 +167,8 @@ class OAuth2Client implements OAuth2ClientInterface {
 
   /**
    * {@inheritdoc}
+   *
+   * @throws \Exception
    */
   public function getAccessToken($redirect = TRUE) {
     // Check wheather the existing token has expired.
@@ -207,8 +224,6 @@ class OAuth2Client implements OAuth2ClientInterface {
             'Unknown authorization flow "@auth_flow". Supported values for auth_flow are: client-credentials, user-password, server-side.',
             ['@auth_flow' => $this->params['auth_flow']]
           ));
-
-          break;
       }
     }
 
@@ -230,7 +245,7 @@ class OAuth2Client implements OAuth2ClientInterface {
   /**
    * {@inheritdoc}
    */
-  public static function setRedirect($state, $redirect =NULL) {
+  public static function setRedirect($state, $redirect = NULL) {
     if ($redirect == NULL) {
       $redirect = [
         'uri' => \Drupal::request()->getRequestUri(),
@@ -242,7 +257,8 @@ class OAuth2Client implements OAuth2ClientInterface {
       $redirect['client'] = 'external';
     }
 
-	$tempstore = \Drupal::service('tempstore.private')->get('oauth2_client');
+    /** @var \Drupal\Core\TempStore\PrivateTempStore $tempstore */
+    $tempstore = \Drupal::service('tempstore.private')->get('oauth2_client');
     $redirects = $tempstore->get('redirect');
     $redirects[$state] = $redirect;
     $tempstore->set('redirect', $redirects);
@@ -254,9 +270,12 @@ class OAuth2Client implements OAuth2ClientInterface {
   public static function redirect($clean = TRUE) {
     if (!\Drupal::service('request_stack')->getCurrentRequest()->get('state')) {
       return;
-	}
-    $state = \Drupal::service('request_stack')->getCurrentRequest()->get('state');
+    }
+    $state = \Drupal::service('request_stack')
+      ->getCurrentRequest()
+      ->get('state');
 
+    /** @var \Drupal\Core\TempStore\PrivateTempStore $tempstore */
     $tempstore = \Drupal::service('tempstore.private')->get('oauth2_client');
     $redirects = $tempstore->get('redirect');
     if (!isset($redirects[$state])) {
@@ -278,15 +297,15 @@ class OAuth2Client implements OAuth2ClientInterface {
       exit();
     }
     else {
-      $params =  \Drupal::request()->query->all();
+      $params = \Drupal::request()->query->all();
       if ($clean) {
         unset($redirects[$state]);
         $tempstore->set('redirect', $redirects);
         unset($params['code']);
         unset($params['state']);
-     }
+      }
 
-      if(isset($redirect['params'])) {
+      if (isset($redirect['params'])) {
         $params = $redirect['params'] + $params;
       }
 
@@ -303,6 +322,8 @@ class OAuth2Client implements OAuth2ClientInterface {
    * This is used for the server-side and user-password
    * flows (not for client-credentials, there is no
    * refresh_token in it).
+   *
+   * @throws \Exception
    */
   protected function getTokenRefreshToken() {
     if (!$this->token['refresh_token']) {
@@ -337,7 +358,8 @@ class OAuth2Client implements OAuth2ClientInterface {
    *         'client_id' => 'client1',
    *         'client_secret' => 'secret1',
    *         'auth_flow' => 'server-side',
-   *         'authorization_endpoint' => 'https://oauth2_server/oauth2/authorize',
+   *         'authorization_endpoint' =>
+   *         'https://oauth2_server/oauth2/authorize',
    *         'redirect_uri' => 'https://oauth2_client/oauth2/authorized',
    *       ));
    *     $access_token = $client->getAccessToken();
@@ -370,6 +392,8 @@ class OAuth2Client implements OAuth2ClientInterface {
    *     $access_token = $client->getAccessToken();
    * But this time we have a valid token already saved in session,
    * so the $client can find and return it without having to redirect etc.
+   *
+   * @throws \Exception
    */
   protected function getTokenServerSide() {
     if (!$this->requestStack->getCurrentRequest()->get('code')) {
@@ -380,20 +404,20 @@ class OAuth2Client implements OAuth2ClientInterface {
       exit();
     }
 
-  // Check the query parameter 'state'.
-  $state = $this->requestStack->getCurrentRequest()->get('state');
-  $redirects = $this->tempstore->get('redirect');
-  if (!$state || !isset($redirects[$state])) {
-    throw new \Exception(t("'State query parameter does not match"));
-  }
+    // Check the query parameter 'state'.
+    $state = $this->requestStack->getCurrentRequest()->get('state');
+    $redirects = $this->tempstore->get('redirect');
+    if (!$state || !isset($redirects[$state])) {
+      throw new \Exception(t("'State query parameter does not match"));
+    }
 
-  // Get and return a token.
-  return $this->getToken([
-    'grant_type' => 'authorization_code',
-    'code' => $this->requestStack->getCurrentRequest()->get('code'),
-    'redirect_uri' => $this->params['redirect_uri'],
-  ]);
-}
+    // Get and return a token.
+    return $this->getToken([
+      'grant_type' => 'authorization_code',
+      'code' => $this->requestStack->getCurrentRequest()->get('code'),
+      'redirect_uri' => $this->params['redirect_uri'],
+    ]);
+  }
 
   /**
    * Return the authentication url (used in case of the server-side flow).
@@ -404,7 +428,7 @@ class OAuth2Client implements OAuth2ClientInterface {
       'response_type' => 'code',
       'client_id' => $this->params['client_id'],
       'redirect_uri' => $this->params['redirect_uri'],
-      'state' => $state
+      'state' => $state,
     ];
 
     if ($this->params['scope']) {
@@ -443,7 +467,7 @@ class OAuth2Client implements OAuth2ClientInterface {
         'ssl' => [
           'verify_peer' => FALSE,
           'verify_peer_name' => FALSE,
-        ]
+        ],
       ]);
     }
 
@@ -452,23 +476,29 @@ class OAuth2Client implements OAuth2ClientInterface {
 
     if (empty($response_data)) {
       throw new \Exception(
-        t('Failed to get an access token of grant_type @grant_type.', ['@grant_type' => $data['grant_type']]) .
-        PHP_EOL .
-        t('Error: @result_error', ['@result_error' => $result->error])
+        $this->t(
+          "Failed to get an access token of grant_type @grant_type.\nError: @result_error",
+          [
+            '@grant_type' => $data['grant_type'],
+            // @todo: $result is undefined. Need to update with proper message.
+            // '@result_error' => $result->error,
+          ]
+        )
       );
     }
- 
-    $serializer = new Serializer(array(new GetSetMethodNormalizer()), array('json' => new JsonEncoder()));
 
-    $token =  $serializer->decode($response_data, 'json');
+    $serializer = new Serializer([new GetSetMethodNormalizer()], ['json' => new JsonEncoder()]);
 
-    if(!isset($token['expiration_time'])) {
+    $token = $serializer->decode($response_data, 'json');
+
+    if (!isset($token['expiration_time'])) {
       // Some providers do not return an 'expires_in' value, so we
       // set a default of an hour. If the token expires dies within that time,
       // the system will request a new token automatically.
-      $token['expiration_time'] = REQUEST_TIME + 3600;
+      $token['expiration_time'] = \Drupal::time()->getRequestTime() + 3600;
     }
 
     return $token;
   }
+
 }

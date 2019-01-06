@@ -1,14 +1,12 @@
 <?php
+
 namespace Drupal\oauth2_client\Service;
 
-use Drupal\Component\Utility\UrlHelper;
-use Drupal\Core\Url;
-use GuzzleHttp\ClientInterface;
-use Symfony\Component\HttpFoundation\RedirectResponse;
-use Symfony\Component\Serializer\Serializer;
-use Symfony\Component\Serializer\Encoder\JsonEncoder;
-use Symfony\Component\Serializer\Normalizer\GetSetMethodNormalizer;
-
+/**
+ * Interface OAuth2ClientInterface.
+ *
+ * @package Drupal\oauth2_client\Service
+ */
 interface OAuth2ClientInterface {
 
   /**
@@ -17,7 +15,6 @@ interface OAuth2ClientInterface {
    * @param array $params
    *   Associative array of the parameters that are needed
    *   by the different types of authorization flows.
-   *
    * @param string $id
    *   ID of the client. If not given, it will be generated
    *   from token_endpoint, client_id and auth_flow.
@@ -45,7 +42,7 @@ interface OAuth2ClientInterface {
   /**
    * Save the information needed for redirection after getting the token.
    */
-  public static function setRedirect($state, $redirect =NULL);
+  public static function setRedirect($state, $redirect = NULL);
 
   /**
    * Redirect to the original path.
@@ -54,5 +51,6 @@ interface OAuth2ClientInterface {
    * The redirect contains the url to go to and the parameters
    * to be sent to it.
    */
-  public static function redirect($clean =TRUE);
+  public static function redirect($clean = TRUE);
+
 }
